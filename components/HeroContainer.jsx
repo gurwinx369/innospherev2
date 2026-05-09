@@ -36,6 +36,7 @@ const BG_STYLE = {
 
 export default function HeroContainer() {
   const [phase, setPhase] = useState(0);
+  const [returnPhase, setReturnPhase] = useState(0);
   const phase2TimerRef = useRef(null);
   const phase5TimerRef = useRef(null);
   const phase8TimerRef = useRef(null);
@@ -43,12 +44,15 @@ export default function HeroContainer() {
 
   // ── Think hover handlers ──
   const handleThinkHoverStart = useCallback(() => {
-    if (phase === 0) setPhase(1);
+    if (phase < 1 || phase > 3) {
+      if ([0, 3, 6, 9, 12].includes(phase)) setReturnPhase(phase);
+      setPhase(1);
+    }
   }, [phase]);
 
   const handleThinkHoverEnd = useCallback(() => {
-    if (phase === 1) setPhase(0);
-  }, [phase]);
+    if (phase === 1) setPhase(returnPhase);
+  }, [phase, returnPhase]);
 
   const handleRingComplete = useCallback(() => {
     setPhase(2);
@@ -58,12 +62,15 @@ export default function HeroContainer() {
 
   // ── Design hover handlers ──
   const handleDesignHoverStart = useCallback(() => {
-    if (phase === 0) setPhase(4);
+    if (phase < 4 || phase > 6) {
+      if ([0, 3, 6, 9, 12].includes(phase)) setReturnPhase(phase);
+      setPhase(4);
+    }
   }, [phase]);
 
   const handleDesignHoverEnd = useCallback(() => {
-    if (phase === 4) setPhase(0);
-  }, [phase]);
+    if (phase === 4) setPhase(returnPhase);
+  }, [phase, returnPhase]);
 
   const handleDesignRingComplete = useCallback(() => {
     setPhase(5);
@@ -73,12 +80,15 @@ export default function HeroContainer() {
 
   // ── Develop hover handlers ──
   const handleDevelopHoverStart = useCallback(() => {
-    if (phase === 0) setPhase(7);
+    if (phase < 7 || phase > 9) {
+      if ([0, 3, 6, 9, 12].includes(phase)) setReturnPhase(phase);
+      setPhase(7);
+    }
   }, [phase]);
 
   const handleDevelopHoverEnd = useCallback(() => {
-    if (phase === 7) setPhase(0);
-  }, [phase]);
+    if (phase === 7) setPhase(returnPhase);
+  }, [phase, returnPhase]);
 
   const handleDevelopRingComplete = useCallback(() => {
     setPhase(8);
@@ -88,12 +98,15 @@ export default function HeroContainer() {
 
   // ── Manifesto hover handlers ──
   const handleManifestoHoverStart = useCallback(() => {
-    if (phase === 0) setPhase(10);
+    if (phase < 10 || phase > 12) {
+      if ([0, 3, 6, 9, 12].includes(phase)) setReturnPhase(phase);
+      setPhase(10);
+    }
   }, [phase]);
 
   const handleManifestoHoverEnd = useCallback(() => {
-    if (phase === 10) setPhase(0);
-  }, [phase]);
+    if (phase === 10) setPhase(returnPhase);
+  }, [phase, returnPhase]);
 
   const handleManifestoRingComplete = useCallback(() => {
     setPhase(11);
@@ -107,12 +120,15 @@ export default function HeroContainer() {
   const isDevelopPhase = phase >= 7 && phase <= 9;
   const isManifestoPhase = phase >= 10 && phase <= 12;
 
+  // The effective section to render components for during transitions/hovering
+  const activeSectionPhase = [1, 4, 7, 10].includes(phase) ? returnPhase : phase;
+
   // Default BG fades out once we commit to any section
   const defaultBgOpacity =
-    (phase >= 2 && phase <= 3) ||
-    (phase >= 5 && phase <= 6) ||
-    (phase >= 8 && phase <= 9) ||
-    phase >= 11
+    (activeSectionPhase >= 2 && activeSectionPhase <= 3) ||
+    (activeSectionPhase >= 5 && activeSectionPhase <= 6) ||
+    (activeSectionPhase >= 8 && activeSectionPhase <= 9) ||
+    activeSectionPhase >= 11
       ? 0
       : 1;
   const defaultBgScale =
@@ -120,21 +136,32 @@ export default function HeroContainer() {
       ? "scale(1.08)"
       : "scale(1)";
 
-  const thinkBgOpacity =
-    phase === 0 ? 0 : phase === 1 ? 0.45 : phase >= 2 && phase <= 3 ? 1 : 0;
-  const designBgOpacity =
-    phase < 4 ? 0 : phase === 4 ? 0.45 : phase >= 5 && phase <= 6 ? 1 : 0;
-  const developBgOpacity =
-    phase < 7 ? 0 : phase === 7 ? 0.45 : phase >= 8 && phase <= 9 ? 1 : 0;
-  const manifestoBgOpacity =
-    phase < 10 ? 0 : phase === 10 ? 0.45 : phase >= 11 && phase <= 12 ? 1 : 0;
+  const getBgOpacity = (sectionPhaseStart) => {
+    const isActivePhase = phase >= sectionPhaseStart + 1 && phase <= sectionPhaseStart + 2;
+    if (isActivePhase) return 1;
+    const isHovering = phase === sectionPhaseStart;
+    if (isHovering) return 0.45;
+    const isActiveSection = activeSectionPhase >= sectionPhaseStart + 1 && activeSectionPhase <= sectionPhaseStart + 2;
+    if (isActiveSection) return 1;
+    return 0;
+  };
+
+  const getBgZIndex = (sectionPhaseStart) => {
+    if (phase === sectionPhaseStart) return 2;
+    const isActiveSection = activeSectionPhase >= sectionPhaseStart + 1 && activeSectionPhase <= sectionPhaseStart + 2;
+    if (isActiveSection) return 1;
+    return 0;
+  };
+
+  const thinkBgOpacity = getBgOpacity(1);
+  const designBgOpacity = getBgOpacity(4);
+  const developBgOpacity = getBgOpacity(7);
+  const manifestoBgOpacity = getBgOpacity(10);
 
   const heroOpacity =
-    phase === 0
-      ? 1
-      : phase === 1 || phase === 4 || phase === 7 || phase === 10
-        ? 0.3
-        : 0;
+    activeSectionPhase === 0
+      ? (phase === 0 ? 1 : 0.3)
+      : 0;
 
   return (
     <>
@@ -168,6 +195,7 @@ export default function HeroContainer() {
         style={{
           ...BG_STYLE,
           opacity: thinkBgOpacity,
+          zIndex: getBgZIndex(1),
           transition: "opacity 640ms ease",
           pointerEvents: "none",
         }}
@@ -194,6 +222,7 @@ export default function HeroContainer() {
         style={{
           ...BG_STYLE,
           opacity: designBgOpacity,
+          zIndex: getBgZIndex(4),
           transition: "opacity 640ms ease",
           pointerEvents: "none",
         }}
@@ -220,6 +249,7 @@ export default function HeroContainer() {
         style={{
           ...BG_STYLE,
           opacity: developBgOpacity,
+          zIndex: getBgZIndex(7),
           transition: "opacity 640ms ease",
           pointerEvents: "none",
         }}
@@ -246,6 +276,7 @@ export default function HeroContainer() {
         style={{
           ...BG_STYLE,
           opacity: manifestoBgOpacity,
+          zIndex: getBgZIndex(10),
           transition: "opacity 640ms ease",
           pointerEvents: "none",
         }}
@@ -304,26 +335,26 @@ export default function HeroContainer() {
         <div
           style={{
             opacity: heroOpacity,
-            transform: phase >= 2 ? "translateY(-12px)" : "translateY(0)",
+            transform: activeSectionPhase >= 2 ? "translateY(-12px)" : "translateY(0)",
             transition: "opacity 600ms ease, transform 300ms ease",
             willChange: "opacity, transform",
-            pointerEvents: phase >= 2 ? "none" : "auto",
+            pointerEvents: activeSectionPhase >= 2 ? "none" : "auto",
           }}
         >
           <HeroSection />
         </div>
 
         {/* Think section — mounts at phase 3 */}
-        {phase === 3 && <ThinkSection />}
+        {activeSectionPhase === 3 && <ThinkSection />}
 
         {/* Design section — mounts at phase 6 */}
-        {phase === 6 && <DesignSection />}
+        {activeSectionPhase === 6 && <DesignSection />}
 
         {/* Develop section — mounts at phase 9 */}
-        {phase >= 9 && phase < 12 && <DevelopSection />}
+        {activeSectionPhase >= 9 && activeSectionPhase < 12 && <DevelopSection />}
 
         {/* Manifesto section — mounts at phase 12 */}
-        {phase >= 12 && <ManifestoSection />}
+        {activeSectionPhase >= 12 && <ManifestoSection />}
       </main>
     </>
   );

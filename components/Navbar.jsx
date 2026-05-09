@@ -337,18 +337,16 @@ export default function Navbar({
                         pointerEvents: "auto",
                       }}
                       onMouseEnter={() => {
-                        if (isThink && phase === 0) onThinkHoverStart?.();
-                        if (isDesign && phase === 0) onDesignHoverStart?.();
-                        if (isDevelop && phase === 0) onDevelopHoverStart?.();
-                        if (isManifesto && phase === 0)
-                          onManifestoHoverStart?.();
+                        if (isThink) onThinkHoverStart?.();
+                        if (isDesign) onDesignHoverStart?.();
+                        if (isDevelop) onDevelopHoverStart?.();
+                        if (isManifesto) onManifestoHoverStart?.();
                       }}
                       onMouseLeave={() => {
-                        if (isThink && phase === 1) onThinkHoverEnd?.();
-                        if (isDesign && phase === 4) onDesignHoverEnd?.();
-                        if (isDevelop && phase === 7) onDevelopHoverEnd?.();
-                        if (isManifesto && phase === 10)
-                          onManifestoHoverEnd?.();
+                        if (isThink) onThinkHoverEnd?.();
+                        if (isDesign) onDesignHoverEnd?.();
+                        if (isDevelop) onDevelopHoverEnd?.();
+                        if (isManifesto) onManifestoHoverEnd?.();
                       }}
                     >
                       <span className="relative z-10 hover:text-white transition-colors">
