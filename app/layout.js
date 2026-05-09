@@ -1,4 +1,4 @@
-import { Courier_Prime, DM_Mono } from "next/font/google";
+import { Courier_Prime, DM_Mono, Poppins } from "next/font/google";
 import "./globals.css";
 import SplashCursor from "@/components/SplashCursor";
 
@@ -14,6 +14,12 @@ const mono = DM_Mono({
   variable: "--font-mono",
 });
 
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-poppins",
+});
+
 export const metadata = {
   title: "innosphere",
   description: "Premium agency landing page",
@@ -21,7 +27,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${courier.variable} ${mono.variable}`}>
+    <html lang="en" className={`${courier.variable} ${mono.variable} ${poppins.variable}`}>
       <body>
         <SplashCursor
           DENSITY_DISSIPATION={3.5}

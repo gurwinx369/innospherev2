@@ -50,6 +50,8 @@ export default function Navbar({
   const manifestoTimerRef = useRef(null);
   const manifestoDissolveTimerRef = useRef(null);
 
+  const [forceHide, setForceHide] = useState(false);
+
   useEffect(() => {
     setMounted(true);
     const updateClock = () => {
@@ -64,9 +66,16 @@ export default function Navbar({
     updateClock();
     const interval = setInterval(updateClock, 1000);
     const showTimer = setTimeout(() => setShow(true), 100);
+
+    const handleHideNav = (e) => {
+      setForceHide(e.detail.hidden);
+    };
+    document.addEventListener("hide-nav", handleHideNav);
+
     return () => {
       clearInterval(interval);
       clearTimeout(showTimer);
+      document.removeEventListener("hide-nav", handleHideNav);
     };
   }, []);
 
@@ -257,7 +266,7 @@ export default function Navbar({
       <header
         className={cn(
           "fixed top-0 left-0 w-full z-[100] h-[60px] flex justify-center bg-transparent transition-all duration-1000 ease-in-out",
-          show ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4",
+          (show && !forceHide) ? "opacity-100 translate-y-0" : forceHide ? "opacity-0 -translate-y-full" : "opacity-0 -translate-y-4",
         )}
         style={{ transitionDelay: "900ms" }}
       >
