@@ -141,7 +141,7 @@ export default function DesignSection() {
               opacity: 0.7,
             }}
           >
-            III • VI PILLARS
+            III • V PILLARS
           </div>
           <div style={{ whiteSpace: "nowrap" }}>
             <BlurText

@@ -153,7 +153,7 @@ export default function ThinkSection() {
               opacity: 0.7,
             }}
           >
-            II • VI PILLARS
+            II • V PILLARS
           </div>
 
           {/* Main headline */}

@@ -37,7 +37,7 @@ export default function HeroSection() {
             color: "white",
           }}
         >
-          I • VI PILLARS
+          I • V PILLARS
         </div>
 
         {/* Main headline */}
