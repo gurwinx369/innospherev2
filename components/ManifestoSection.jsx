@@ -245,6 +245,10 @@ export default function ManifestoSection() {
 
         {/* ── BOTTOM-RIGHT CTA BUTTON ── */}
         <button
+          onClick={() => {
+            setScrollProgress(1);
+            setPhase2(true);
+          }}
           style={{
             position: "absolute",
             bottom: "40px",

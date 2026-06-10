@@ -11,6 +11,7 @@ export default function DesignSection() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [hovered, setHovered] = useState(false);
   const scrollContainerRef = useRef(null);
+  const gridRef = useRef(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setShowDelayed(true), 100);
@@ -201,6 +202,15 @@ export default function DesignSection() {
         </ul>
 
         <button
+          onClick={() => {
+            setScrollProgress(1);
+            setPhase2(true);
+            setTimeout(() => {
+              if (gridRef.current) {
+                gridRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+              }
+            }, 100);
+          }}
           style={{
             position: "absolute",
             bottom: "40px",
@@ -331,6 +341,7 @@ export default function DesignSection() {
 
           {/* Grid */}
           <div
+            ref={gridRef}
             style={{
               position: "relative",
               width: "100%",

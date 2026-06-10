@@ -12,6 +12,7 @@ export default function ThinkSection() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const scrollContainerRef = useRef(null);
   const [hovered, setHovered] = useState(false);
+  const gridRef = useRef(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -220,6 +221,15 @@ export default function ThinkSection() {
 
         {/* ── BOTTOM-RIGHT CTA BUTTON ── */}
         <button
+          onClick={() => {
+            setScrollProgress(1);
+            setPhase2(true);
+            setTimeout(() => {
+              if (gridRef.current) {
+                gridRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+              }
+            }, 100);
+          }}
           style={{
             position: "absolute",
             bottom: "40px",
@@ -363,6 +373,7 @@ export default function ThinkSection() {
 
           {/* ── GRID SECTION ── */}
           <div
+            ref={gridRef}
             style={{
               position: "relative",
               width: "100%",
