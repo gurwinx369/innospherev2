@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import BlurText from "./BlurText";
-import Galaxy from "@/components/Galaxy";
+import BlurText from "@/components/ui/BlurText";
+import Galaxy from "@/components/ui/Galaxy";
 
 const contributions = [
   "Product Strategy",
@@ -142,17 +142,16 @@ export default function ManifestoSection() {
       >
         {/* ── CENTER TEXT BLOCK ── */}
         <div
+        className="hidden sm:flex"
           style={{
             position: "absolute",
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            display: "flex",
             flexDirection: "column",
             alignItems: "center",
             textAlign: "center",
             gap: 0,
-            whiteSpace: "nowrap",
           }}
         >
           {/* Small label — centered */}
@@ -193,13 +192,50 @@ export default function ManifestoSection() {
           </div>
         </div>
 
-        {/* ── BOTTOM-LEFT CONTRIBUTION LIST ── */}
+        {/* MOBILE: headline — bottom-left editorial layout */}
+        <div
+          className="sm:hidden"
+          style={{
+            position: "absolute",
+            left: "24px",
+            right: "24px",
+            bottom: "170px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            zIndex: 10,
+            pointerEvents: "none",
+          }}
+        >
+          <div
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "10px",
+              letterSpacing: "0.2em",
+              color: "white",
+              textTransform: "uppercase",
+              marginBottom: "12px",
+              opacity: 0.7,
+            }}
+          >
+            V • V PILLARS
+          </div>
+          <BlurText
+            text="Pivotal contributions for our clients."
+            animateBy="words"
+            direction="top"
+            delay={200}
+            className="font-[var(--font-courier)] text-[clamp(1.9rem,9.5vw,3.5rem)] font-[400] tracking-[0.01em] text-white opacity-100 text-left leading-[1.06]"
+          />
+        </div>
+
+        {/* ── BOTTOM-LEFT CONTRIBUTION LIST (desktop only) ── */}
         <ul
+          className="hidden sm:flex"
           style={{
             position: "absolute",
             bottom: "60px",
             left: "40px",
-            display: "flex",
             flexDirection: "column",
             gap: "14px",
             alignItems: "flex-start",
@@ -243,8 +279,9 @@ export default function ManifestoSection() {
           ))}
         </ul>
 
-        {/* ── BOTTOM-RIGHT CTA BUTTON ── */}
+        {/* ── BOTTOM-RIGHT CTA BUTTON (desktop only) ── */}
         <button
+          className="hidden sm:block"
           onClick={() => {
             setScrollProgress(1);
             setPhase2(true);
@@ -279,52 +316,126 @@ export default function ManifestoSection() {
           Read our manifesto
         </button>
 
-        {/* ── SCROLL PROGRESS INDICATOR ── */}
-        <div
+        {/* ── SCROLL DOWN BUTTON ANIMATION (desktop only) ── */}
+        <button
+          className="hidden sm:block group"
+          onClick={() => {
+            setScrollProgress(1);
+            setPhase2(true);
+            setTimeout(() => {
+              if (scrollContainerRef.current) {
+                scrollContainerRef.current.scrollTop = 0;
+              }
+            }, 100);
+          }}
+          aria-label="Scroll down"
           style={{
             position: "absolute",
             bottom: "40px",
             left: "50%",
             transform: "translateX(-50%)",
+            background: "transparent",
+            border: "none",
+            padding: 0,
+            cursor: "pointer",
             opacity: showDelayed ? 1 : 0,
             transition: "opacity 1000ms ease",
             transitionDelay: "1000ms",
+            zIndex: 20,
           }}
         >
-          <svg width="48" height="48" viewBox="0 0 48 48">
+          <svg
+            width="48"
+            height="48"
+            viewBox="0 0 48 48"
+            className="transition-transform duration-300 group-hover:scale-110 group-active:scale-95"
+          >
+            <circle cx="24" cy="24" r="22" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
             <circle
-              cx="24"
-              cy="24"
-              r="22"
-              fill="none"
-              stroke="rgba(255,255,255,0.15)"
-              strokeWidth="1"
-            />
-            <circle
-              cx="24"
-              cy="24"
-              r="22"
-              fill="none"
-              stroke="white"
-              strokeWidth="1.5"
+              cx="24" cy="24" r="22" fill="none" stroke="white" strokeWidth="1.5"
               strokeDasharray={2 * Math.PI * 22}
               strokeDashoffset={2 * Math.PI * 22 * (1 - scrollProgress)}
               strokeLinecap="round"
-              style={{
-                transformOrigin: "24px 24px",
-                transform: "rotate(-90deg)",
-                transition: "stroke-dashoffset 0.1s linear",
-              }}
+              style={{ transformOrigin: "24px 24px", transform: "rotate(-90deg)", transition: "stroke-dashoffset 0.1s linear" }}
             />
-            <path
-              d="M24 16 L24 32 M18 26 L24 32 L30 26"
-              fill="none"
-              stroke="white"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+            <path d="M24 16 L24 32 M18 26 L24 32 L30 26" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
+        </button>
+
+        {/* ── MOBILE: split bottom layout — left content + right icon ── */}
+        <div
+          className="sm:hidden"
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "space-between",
+            padding: "0 24px 36px",
+            opacity: showDelayed ? 1 : 0,
+            transform: showDelayed ? "translateY(0)" : "translateY(16px)",
+            transition: "opacity 800ms ease, transform 800ms ease",
+            transitionDelay: "700ms",
+          }}
+        >
+          {/* LEFT: contribution list + Contact us CTA */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "8px" }}>
+              {contributions.map((item, idx) => (
+                <li
+                  key={idx}
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "10px",
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                    color: "rgba(255,255,255,0.7)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    cursor: "default",
+                  }}
+                >
+                  <span style={{ width: "3px", height: "3px", borderRadius: "50%", background: "white", opacity: 0.5, flexShrink: 0 }} />
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <button
+              onClick={() => { setScrollProgress(1); setPhase2(true); }}
+              style={{
+                background: "transparent",
+                borderRadius: "9999px",
+                border: "1px solid rgba(255,255,255,0.6)",
+                padding: "9px 20px",
+                color: "white",
+                fontFamily: "var(--font-mono)",
+                fontSize: "12px",
+                letterSpacing: "0.04em",
+                cursor: "pointer",
+                alignSelf: "flex-start",
+              }}
+            >
+              Contact us
+            </button>
+          </div>
+
+          {/* RIGHT: scroll icon only */}
+          <div style={{ pointerEvents: "none", flexShrink: 0 }}>
+            <svg width="40" height="40" viewBox="0 0 48 48">
+              <circle cx="24" cy="24" r="22" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
+              <circle
+                cx="24" cy="24" r="22" fill="none" stroke="white" strokeWidth="1.5"
+                strokeDasharray={2 * Math.PI * 22}
+                strokeDashoffset={2 * Math.PI * 22 * (1 - scrollProgress)}
+                strokeLinecap="round"
+                style={{ transformOrigin: "24px 24px", transform: "rotate(-90deg)", transition: "stroke-dashoffset 0.1s linear" }}
+              />
+              <path d="M24 16 L24 32 M18 26 L24 32 L30 26" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
         </div>
       </div>
 
@@ -1617,9 +1728,9 @@ export default function ManifestoSection() {
                     maxWidth: "900px",
                   }}
                 >
-                  INNOSPHERE designs, validates and builds digital products end
-                  to end, offering strategy, design, engineering and AI services
-                  that turn business ideas into scalable, user-loved
+                  IMPPECCABLES designs, validates and builds digital products
+                  end to end, offering strategy, design, engineering and AI
+                  services that turn business ideas into scalable, user-loved
                   experiences.
                 </h3>
 
@@ -2125,7 +2236,7 @@ export default function ManifestoSection() {
                     margin: "0 0 24px 0",
                   }}
                 >
-                  Innosphere
+                  IMPPECCABLES
                 </h4>
                 <div
                   style={{
@@ -2199,8 +2310,7 @@ export default function ManifestoSection() {
                   color: "rgba(255,255,255,0.6)",
                 }}
               >
-                Innosphere digital - a company which turns complexity into
-                elegance.
+                Imppeccables - a company which turns complexity into elegance.
               </div>
               <div
                 style={{

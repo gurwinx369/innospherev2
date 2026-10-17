@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import ColorBends from "@/components/BgLines";
-import Navbar from "@/components/Navbar";
-import HeroSection from "@/components/HeroSection";
-import ThinkSection from "@/components/ThinkSection";
-import DesignSection from "@/components/DesignSection";
-import DevelopSection from "@/components/DevelopSection";
-import ManifestoSection from "@/components/ManifestoSection";
+import ColorBends from "@/components/ui/BgLines";
+import Navbar from "@/components/sections/Navbar";
+import HeroSection from "@/components/sections/HeroSection";
+import ThinkSection from "@/components/sections/ThinkSection";
+import DesignSection from "@/components/sections/DesignSection";
+import DevelopSection from "@/components/sections/DevelopSection";
+import ManifestoSection from "@/components/sections/ManifestoSection";
 
 // phase:
 //   0 = default / hero
@@ -121,7 +121,9 @@ export default function HeroContainer() {
   const isManifestoPhase = phase >= 10 && phase <= 12;
 
   // The effective section to render components for during transitions/hovering
-  const activeSectionPhase = [1, 4, 7, 10].includes(phase) ? returnPhase : phase;
+  const activeSectionPhase = [1, 4, 7, 10].includes(phase)
+    ? returnPhase
+    : phase;
 
   // Default BG fades out once we commit to any section
   const defaultBgOpacity =
@@ -137,18 +139,23 @@ export default function HeroContainer() {
       : "scale(1)";
 
   const getBgOpacity = (sectionPhaseStart) => {
-    const isActivePhase = phase >= sectionPhaseStart + 1 && phase <= sectionPhaseStart + 2;
+    const isActivePhase =
+      phase >= sectionPhaseStart + 1 && phase <= sectionPhaseStart + 2;
     if (isActivePhase) return 1;
     const isHovering = phase === sectionPhaseStart;
     if (isHovering) return 0.45;
-    const isActiveSection = activeSectionPhase >= sectionPhaseStart + 1 && activeSectionPhase <= sectionPhaseStart + 2;
+    const isActiveSection =
+      activeSectionPhase >= sectionPhaseStart + 1 &&
+      activeSectionPhase <= sectionPhaseStart + 2;
     if (isActiveSection) return 1;
     return 0;
   };
 
   const getBgZIndex = (sectionPhaseStart) => {
     if (phase === sectionPhaseStart) return 2;
-    const isActiveSection = activeSectionPhase >= sectionPhaseStart + 1 && activeSectionPhase <= sectionPhaseStart + 2;
+    const isActiveSection =
+      activeSectionPhase >= sectionPhaseStart + 1 &&
+      activeSectionPhase <= sectionPhaseStart + 2;
     if (isActiveSection) return 1;
     return 0;
   };
@@ -158,10 +165,7 @@ export default function HeroContainer() {
   const developBgOpacity = getBgOpacity(7);
   const manifestoBgOpacity = getBgOpacity(10);
 
-  const heroOpacity =
-    activeSectionPhase === 0
-      ? (phase === 0 ? 1 : 0.3)
-      : 0;
+  const heroOpacity = activeSectionPhase === 0 ? (phase === 0 ? 1 : 0.3) : 0;
 
   return (
     <>
@@ -335,7 +339,8 @@ export default function HeroContainer() {
         <div
           style={{
             opacity: heroOpacity,
-            transform: activeSectionPhase >= 2 ? "translateY(-12px)" : "translateY(0)",
+            transform:
+              activeSectionPhase >= 2 ? "translateY(-12px)" : "translateY(0)",
             transition: "opacity 600ms ease, transform 300ms ease",
             willChange: "opacity, transform",
             pointerEvents: activeSectionPhase >= 2 ? "none" : "auto",
@@ -351,7 +356,9 @@ export default function HeroContainer() {
         {activeSectionPhase === 6 && <DesignSection />}
 
         {/* Develop section — mounts at phase 9 */}
-        {activeSectionPhase >= 9 && activeSectionPhase < 12 && <DevelopSection />}
+        {activeSectionPhase >= 9 && activeSectionPhase < 12 && (
+          <DevelopSection />
+        )}
 
         {/* Manifesto section — mounts at phase 12 */}
         {activeSectionPhase >= 12 && <ManifestoSection />}

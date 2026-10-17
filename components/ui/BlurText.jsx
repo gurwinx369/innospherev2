@@ -73,7 +73,7 @@ export default function BlurText({
   );
 
   return (
-    <p ref={ref} className={`inline-flex flex-nowrap ${className}`}>
+    <p ref={ref} className={`inline-flex flex-wrap ${className}`}>
       {springs.map((props, index) => (
         <animated.span
           key={index}

@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import BlurText from "./BlurText";
-import { GridScan } from "@/components/BgGridScan";
-import ScrollVelocity from "./ScrollVelocity";
+import BlurText from "@/components/ui/BlurText";
+import LineWaves from "@/components/ui/LineWaves";
+import ScrollVelocity from "@/components/ui/ScrollVelocity";
 
-export default function DevelopSection() {
+export default function DesignSection() {
   const [showDelayed, setShowDelayed] = useState(false);
   const [phase2, setPhase2] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -18,16 +18,15 @@ export default function DevelopSection() {
     return () => clearTimeout(timer);
   }, []);
 
+  const touchStartY = useRef(null);
+
   useEffect(() => {
     const handleWheel = (e) => {
       if (!phase2) {
         if (e.deltaY > 0) {
           setScrollProgress((prev) => {
             const next = prev + 0.03;
-            if (next >= 1) {
-              setPhase2(true);
-              return 1;
-            }
+            if (next >= 1) { setPhase2(true); return 1; }
             return next;
           });
         } else {
@@ -40,8 +39,24 @@ export default function DevelopSection() {
         }
       }
     };
-    window.addEventListener("wheel", handleWheel);
-    return () => window.removeEventListener("wheel", handleWheel);
+
+    const handleTouchStart = (e) => { touchStartY.current = e.touches[0].clientY; };
+    const handleTouchEnd = (e) => {
+      if (touchStartY.current === null) return;
+      const delta = touchStartY.current - e.changedTouches[0].clientY;
+      if (!phase2 && delta > 40) { setScrollProgress(1); setPhase2(true); }
+      else if (phase2 && delta < -40 && scrollContainerRef.current?.scrollTop === 0) { setPhase2(false); setScrollProgress(0.9); }
+      touchStartY.current = null;
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: true });
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
   }, [phase2]);
 
   const pillars = [
@@ -61,27 +76,22 @@ export default function DevelopSection() {
         overflow: "hidden",
       }}
     >
-      {/* GridScan background */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 0,
-          width: "100%",
-          height: "100%",
-        }}
-      >
-        <GridScan
-          sensitivity={0.55}
-          lineThickness={1}
-          linesColor="#2F293A"
-          gridScale={0.1}
-          scanColor="#9d9ef8"
-          scanOpacity={0.4}
-          enablePost
-          bloomIntensity={0.6}
-          chromaticAberration={0.002}
-          noiseIntensity={0.01}
+      {/* LineWaves background */}
+      <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
+        <LineWaves
+          speed={0.25}
+          innerLineCount={28.0}
+          outerLineCount={32.0}
+          warpIntensity={0.8}
+          rotation={-30}
+          edgeFadeWidth={0.1}
+          colorCycleSpeed={0.6}
+          brightness={0.18}
+          color1="#024cc6"
+          color2="#6184be"
+          color3="#3B82F6"
+          enableMouseInteraction={true}
+          mouseInfluence={1.8}
         />
       </div>
 
@@ -125,21 +135,50 @@ export default function DevelopSection() {
         }}
       >
         <div
+        className="hidden sm:flex"
           style={{
             position: "absolute",
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
             textAlign: "center",
-            display: "flex",
             flexDirection: "column",
             alignItems: "center",
+            width: "100%",
+            padding: "0 24px",
+          }}
+        >
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: "11px", letterSpacing: "0.2em", color: "white", textTransform: "uppercase", marginBottom: "12px", opacity: 0.7 }}>
+            III • V PILLARS
+          </div>
+          <BlurText
+            text="Breathing with the design"
+            animateBy="words"
+            direction="top"
+            delay={200}
+            className="font-[var(--font-courier)] text-[clamp(1.9rem,6vw,4.5rem)] font-[400] tracking-[0.04em] text-white opacity-100 text-center leading-tight"
+          />
+        </div>
+
+        {/* MOBILE: headline — bottom-left editorial layout */}
+        <div
+          className="sm:hidden"
+          style={{
+            position: "absolute",
+            left: "24px",
+            right: "24px",
+            bottom: "170px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            zIndex: 10,
+            pointerEvents: "none",
           }}
         >
           <div
             style={{
               fontFamily: "var(--font-mono)",
-              fontSize: "11px",
+              fontSize: "10px",
               letterSpacing: "0.2em",
               color: "white",
               textTransform: "uppercase",
@@ -147,25 +186,24 @@ export default function DevelopSection() {
               opacity: 0.7,
             }}
           >
-            IV • V PILLARS
+            III • V PILLARS
           </div>
-          <div style={{ whiteSpace: "nowrap" }}>
-            <BlurText
-              text="Being in the engineering details"
-              animateBy="words"
-              direction="top"
-              delay={200}
-              className="font-[var(--font-courier)] text-[clamp(2.5rem,5vw,4.5rem)] font[400] tracking-[0.04em] text-white opacity-100"
-            />
-          </div>
+          <BlurText
+            text="Breathing with the design"
+            animateBy="words"
+            direction="top"
+            delay={200}
+            className="font-[var(--font-courier)] text-[clamp(2rem,10vw,3.5rem)] font-[400] tracking-[0.01em] text-white opacity-100 text-left leading-[1.06]"
+          />
         </div>
 
+        {/* Desktop: bottom-left pillar list */}
         <ul
+          className="hidden sm:flex"
           style={{
             position: "absolute",
             bottom: "60px",
             left: "40px",
-            display: "flex",
             flexDirection: "column",
             gap: "14px",
             listStyle: "none",
@@ -173,49 +211,22 @@ export default function DevelopSection() {
             padding: 0,
             opacity: showDelayed ? 0.85 : 0,
             transform: showDelayed ? "translateY(0)" : "translateY(16px)",
-            transition: "opacity 1000ms ease, transform 1000ms ease",
+            transition: "opacity 800ms ease, transform 800ms ease",
             transitionDelay: "700ms",
           }}
         >
           {pillars.map((p, i) => (
-            <li
-              key={i}
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: "11px",
-                letterSpacing: "0.15em",
-                textTransform: "uppercase",
-                color: "white",
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-              }}
-            >
-              <span
-                style={{
-                  width: "4px",
-                  height: "4px",
-                  borderRadius: "50%",
-                  background: "white",
-                  opacity: 0.6,
-                  flexShrink: 0,
-                }}
-              />
+            <li key={i} style={{ fontFamily: "var(--font-mono)", fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", color: "white", display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{ width: "4px", height: "4px", borderRadius: "50%", background: "white", opacity: 0.6, flexShrink: 0 }} />
               {p}
             </li>
           ))}
         </ul>
 
+        {/* Desktop: bottom-right CTA */}
         <button
-          onClick={() => {
-            setScrollProgress(1);
-            setPhase2(true);
-            setTimeout(() => {
-              if (gridRef.current) {
-                gridRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-              }
-            }, 100);
-          }}
+          className="hidden sm:block"
+          onClick={() => { setScrollProgress(1); setPhase2(true); }}
           style={{
             position: "absolute",
             bottom: "40px",
@@ -230,67 +241,135 @@ export default function DevelopSection() {
             cursor: "pointer",
             opacity: showDelayed ? 1 : 0,
             transform: showDelayed ? "translateY(0)" : "translateY(16px)",
-            transition:
-              "opacity 300ms ease, transform 300ms ease, border-color 300ms ease, box-shadow 300ms ease",
+            transition: "opacity 300ms ease, transform 300ms ease, border-color 300ms ease",
             transitionDelay: showDelayed ? "900ms" : "0ms",
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "var(--border-hover)";
-            e.currentTarget.style.boxShadow = "0 0 24px rgba(255,159,252,0.35)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "white";
-            e.currentTarget.style.boxShadow = "none";
-          }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-hover)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "white"; }}
         >
-          View case studies
+          See our work
         </button>
 
-        <div
+        {/* ── Scroll down button animation (desktop only, centered at bottom) ── */}
+        <button
+          className="hidden sm:block group"
+          onClick={() => {
+            setScrollProgress(1);
+            setPhase2(true);
+            setTimeout(() => {
+              if (gridRef.current) {
+                gridRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+              }
+            }, 100);
+          }}
+          aria-label="Scroll down"
           style={{
             position: "absolute",
             bottom: "40px",
             left: "50%",
             transform: "translateX(-50%)",
+            background: "transparent",
+            border: "none",
+            padding: 0,
+            cursor: "pointer",
             opacity: showDelayed ? 1 : 0,
-            transition: "opacity 1000ms ease",
+            transition: "opacity 800ms ease",
             transitionDelay: "1000ms",
+            zIndex: 20,
           }}
         >
-          <svg width="48" height="48" viewBox="0 0 48 48">
+          <svg
+            width="44"
+            height="44"
+            viewBox="0 0 48 48"
+            className="transition-transform duration-300 group-hover:scale-110 group-active:scale-95"
+          >
+            <circle cx="24" cy="24" r="22" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
             <circle
-              cx="24"
-              cy="24"
-              r="22"
-              fill="none"
-              stroke="rgba(255,255,255,0.15)"
-              strokeWidth="1"
-            />
-            <circle
-              cx="24"
-              cy="24"
-              r="22"
-              fill="none"
-              stroke="white"
-              strokeWidth="1.5"
+              cx="24" cy="24" r="22" fill="none" stroke="white" strokeWidth="1.5"
               strokeDasharray={2 * Math.PI * 22}
               strokeDashoffset={2 * Math.PI * 22 * (1 - scrollProgress)}
               strokeLinecap="round"
-              style={{
-                transformOrigin: "24px 24px",
-                transform: "rotate(-90deg)",
-                transition: "stroke-dashoffset 0.1s linear",
-              }}
+              style={{ transformOrigin: "24px 24px", transform: "rotate(-90deg)", transition: "stroke-dashoffset 80ms linear" }}
             />
-            <path
-              d="M24 16 L24 32 M18 26 L24 32 L30 26"
-              fill="none"
-              stroke="white"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+            <path d="M24 16 L24 32 M18 26 L24 32 L30 26" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
+        </button>
+
+        {/* ── MOBILE: split bottom layout — left content + right icon ── */}
+        <div
+          className="sm:hidden"
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "space-between",
+            padding: "0 24px 36px",
+            opacity: showDelayed ? 1 : 0,
+            transform: showDelayed ? "translateY(0)" : "translateY(16px)",
+            transition: "opacity 800ms ease, transform 800ms ease",
+            transitionDelay: "700ms",
+          }}
+        >
+          {/* LEFT: pillar list + Contact us CTA */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "8px" }}>
+              {pillars.map((p, i) => (
+                <li
+                  key={i}
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "10px",
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                    color: "rgba(255,255,255,0.7)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    cursor: "default",
+                  }}
+                >
+                  <span style={{ width: "3px", height: "3px", borderRadius: "50%", background: "white", opacity: 0.5, flexShrink: 0 }} />
+                  {p}
+                </li>
+              ))}
+            </ul>
+            <button
+              onClick={() => { setScrollProgress(1); setPhase2(true); }}
+              style={{
+                background: "transparent",
+                borderRadius: "9999px",
+                border: "1px solid rgba(255,255,255,0.6)",
+                padding: "9px 20px",
+                color: "white",
+                fontFamily: "var(--font-mono)",
+                fontSize: "12px",
+                letterSpacing: "0.04em",
+                cursor: "pointer",
+                alignSelf: "flex-start",
+              }}
+            >
+              Contact us
+            </button>
+          </div>
+
+          {/* RIGHT: scroll icon only */}
+          <div style={{ pointerEvents: "none", flexShrink: 0 }}>
+            <svg width="40" height="40" viewBox="0 0 48 48">
+              <circle cx="24" cy="24" r="22" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
+              <circle
+                cx="24" cy="24" r="22" fill="none" stroke="white" strokeWidth="1.5"
+                strokeDasharray={2 * Math.PI * 22}
+                strokeDashoffset={2 * Math.PI * 22 * (1 - scrollProgress)}
+                strokeLinecap="round"
+                style={{ transformOrigin: "24px 24px", transform: "rotate(-90deg)", transition: "stroke-dashoffset 80ms linear" }}
+              />
+              <path d="M24 16 L24 32 M18 26 L24 32 L30 26" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
         </div>
       </div>
 
@@ -328,7 +407,7 @@ export default function DevelopSection() {
               className="font-[var(--font-courier)] text-[clamp(2.5rem,5vw,4.5rem)] font-[400] tracking-[0.04em] text-white"
               style={{ lineHeight: 1.2, marginBottom: "30px" }}
             >
-              Being in the engineering details
+              Breathing with the design
             </h2>
             <p
               style={{
@@ -339,9 +418,8 @@ export default function DevelopSection() {
                 maxWidth: "680px",
               }}
             >
-              Ship reliable digital products end to end: INNOSPHERE turns
-              thoughtful engineering, mobile excellence and AI automation into
-              scalable, production-ready experiences.
+              Shape a product identity users recognize, trust and enjoy every
+              day across brand, interface and system design.
             </p>
           </div>
 
@@ -396,10 +474,10 @@ export default function DevelopSection() {
               }}
             >
               {[
-                "Full Stack Engineering",
-                "Backend & Frontend",
-                "Mobile Development",
-                "AI and Automation",
+                "Branding",
+                "UI Design",
+                "Design System",
+                "Ideation & Prototyping",
               ].map((t, i) => (
                 <div
                   key={i}
@@ -427,7 +505,7 @@ export default function DevelopSection() {
               <div
                 style={{
                   position: "absolute",
-                  left: "75%",
+                  left: "25%",
                   top: "50%",
                   transform: "translate(-50%, -50%)",
                   width: "10px",
@@ -460,28 +538,28 @@ export default function DevelopSection() {
             >
               {[
                 [
-                  "Architecture & Tech Stack",
-                  "End-to-End Implementation",
-                  "Performance & Scalability",
-                  "DevOps & CI/CD",
+                  "Brand Positioning",
+                  "Product Narrative",
+                  "Visual Identity System",
+                  "Voice and Tone",
                 ],
                 [
-                  "API Design & Build",
-                  "Frontend Feature Delivery",
-                  "Security & Compliance",
-                  "Testing & Code Quality",
+                  "Information Architecture",
+                  "Interaction Design",
+                  "Responsive Layouts",
+                  "Microinteractions",
                 ],
                 [
-                  "Native iOS & Android",
-                  "Cross-Platform Frameworks",
-                  "Mobile UX Optimization",
-                  "Store Readiness & Release",
+                  "Design Tokens",
+                  "Component Library",
+                  "Usage Guidelines",
+                  "Design Ops Support",
                 ],
                 [
-                  "Opportunity Assessment",
-                  "Data & Model Strategy",
-                  "Workflow Automation Design",
-                  "Integration & Monitoring",
+                  "Concept Workshops",
+                  "Rapid Wireframing",
+                  "Interactive Prototypes",
+                  "Usability Experiments",
                 ],
               ].map((col, ci) => (
                 <div
@@ -595,9 +673,9 @@ export default function DevelopSection() {
                     margin: 0,
                   }}
                 >
-                  Unleash your product&apos;s potential by engineering every
-                  detail web, mobile, AI and automation to deliver faster,
-                  smarter and more reliable experiences to your users.
+                  Unleash your product&apos;s potential by shaping a cohesive
+                  brand, interface and design system that make every interaction
+                  clear, consistent and unmistakably yours.
                 </p>
               </div>
             </div>
@@ -612,24 +690,24 @@ export default function DevelopSection() {
             >
               {[
                 {
-                  title: "FULL STACK ENGINEERING",
+                  title: "BRANDING",
                   description:
-                    "From database to interface, our full stack engineers design, build and maintain complete digital products that are secure, scalable and ready for real-world usage.",
+                    "We build product brands that feel native to your market: clear positioning, strong storytelling and visuals that users remember inside and outside the app.",
                 },
                 {
-                  title: "BACKEND & FRONTEND DEVELOPMENT",
+                  title: "UI DESIGN",
                   description:
-                    "We build robust backends and sleek frontends that work together seamlessly, turning product requirements into secure APIs and interfaces users actually enjoy.",
+                    "We design intuitive interfaces that turn your brand and strategy into clear screens, flows and interactions that users understand without a manual.",
                 },
                 {
-                  title: "MOBILE DEVELOPMENT",
+                  title: "DESIGN SYSTEM",
                   description:
-                    "We craft high-performance mobile apps that feel native, reliable and aligned with your product, whether users are on iOS, Android or cross-platform solutions.",
+                    "We create scalable design systems that align product, design and engineering, speeding up delivery while keeping every release visually consistent.",
                 },
                 {
-                  title: "AI & AUTOMATION",
+                  title: "IDEATION & PROTOTYPING",
                   description:
-                    "We integrate AI and automation into your product to reduce manual work, surface insights and create smarter, more personalized user experiences.",
+                    "We turn ideas into tangible product experiences through collaborative workshops, fast prototypes and tests that validate what really works.",
                 },
               ].map((card, idx) => (
                 <div
@@ -675,15 +753,14 @@ export default function DevelopSection() {
           >
             <ScrollVelocity
               texts={[
-                "Engineering excellence · Mobile mastery · AI-powered products \u00A0 \u00A0 \u00A0 \u00A0 \u00A0 ",
+                "Cohesive brand · Intuitive interfaces · Scalable systems \u00A0 \u00A0 \u00A0 \u00A0 \u00A0 ",
               ]}
               velocity={50}
               scrollContainerRef={scrollContainerRef}
               className="font-[var(--font-poppins)] text-[clamp(4rem,10vw,8rem)] font-[400] tracking-[-0.04em] text-black"
             />
           </div>
-
-          {/* Client projects grid */}
+          {/* ── CLIENT PROJECTS GRID ── */}
           <div
             style={{
               padding: "0 80px 120px",
@@ -724,6 +801,7 @@ export default function DevelopSection() {
                   key={idx}
                   className="group relative flex flex-col cursor-pointer"
                 >
+                  {/* Image Container */}
                   <div
                     className="relative w-full overflow-hidden mb-[24px]"
                     style={{ aspectRatio: "4/5", backgroundColor: project.bg }}
@@ -737,6 +815,7 @@ export default function DevelopSection() {
                       }}
                     />
                   </div>
+                  {/* Labels */}
                   <span
                     style={{
                       fontFamily: "var(--font-mono)",
@@ -762,7 +841,6 @@ export default function DevelopSection() {
               ))}
             </div>
           </div>
-
           {/* CTA */}
           <div
             style={{
@@ -789,6 +867,7 @@ export default function DevelopSection() {
               <br />
               digital products for forward-thinking clients.
             </h2>
+
             <button
               className="flex items-center cursor-pointer bg-transparent border-none"
               onMouseEnter={() => setHovered(true)}
@@ -1005,7 +1084,7 @@ export default function DevelopSection() {
                     margin: "0 0 24px 0",
                   }}
                 >
-                  Innosphere
+                  IMPPECCABLES
                 </h4>
                 <div
                   style={{
@@ -1079,7 +1158,7 @@ export default function DevelopSection() {
                   color: "rgba(255,255,255,0.6)",
                 }}
               >
-                Innosphere digital - a company which turns complexity into
+                IMPPECCABLES digital - a company which turns complexity into
                 elegance.
               </div>
               <div

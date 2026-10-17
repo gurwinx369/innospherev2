@@ -1,22 +1,28 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import BlurText from "./BlurText";
-import LineWaves from "@/components/LineWaves";
-import ScrollVelocity from "./ScrollVelocity";
+import BlurText from "@/components/ui/BlurText";
+import FloatingLines from "@/components/ui/BgFloatingLines";
+import ScrollVelocity from "@/components/ui/ScrollVelocity";
+import { cn } from "@/lib/utils";
 
-export default function DesignSection() {
+export default function ThinkSection() {
   const [showDelayed, setShowDelayed] = useState(false);
   const [phase2, setPhase2] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [hovered, setHovered] = useState(false);
   const scrollContainerRef = useRef(null);
+  const [hovered, setHovered] = useState(false);
   const gridRef = useRef(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowDelayed(true), 100);
+    const timer = setTimeout(() => {
+      setShowDelayed(true);
+    }, 100);
     return () => clearTimeout(timer);
   }, []);
+
+  // Touch swipe tracking for mobile phase progression
+  const touchStartY = useRef(null);
 
   useEffect(() => {
     const handleWheel = (e) => {
@@ -24,10 +30,7 @@ export default function DesignSection() {
         if (e.deltaY > 0) {
           setScrollProgress((prev) => {
             const next = prev + 0.03;
-            if (next >= 1) {
-              setPhase2(true);
-              return 1;
-            }
+            if (next >= 1) { setPhase2(true); return 1; }
             return next;
           });
         } else {
@@ -40,11 +43,37 @@ export default function DesignSection() {
         }
       }
     };
-    window.addEventListener("wheel", handleWheel);
-    return () => window.removeEventListener("wheel", handleWheel);
+
+    const handleTouchStart = (e) => {
+      touchStartY.current = e.touches[0].clientY;
+    };
+
+    const handleTouchEnd = (e) => {
+      if (touchStartY.current === null) return;
+      const delta = touchStartY.current - e.changedTouches[0].clientY;
+      if (!phase2 && delta > 40) {
+        // Swipe up on Phase 1 — advance to Phase 2
+        setScrollProgress(1);
+        setPhase2(true);
+      } else if (phase2 && delta < -40 && scrollContainerRef.current?.scrollTop === 0) {
+        // Swipe down on Phase 2 at top — go back to Phase 1
+        setPhase2(false);
+        setScrollProgress(0.9);
+      }
+      touchStartY.current = null;
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: true });
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
   }, [phase2]);
 
-  const pillars = [
+  const categories = [
     "Artificial Intelligence",
     "Full stack engineering",
     "Mobile Apps",
@@ -61,39 +90,42 @@ export default function DesignSection() {
         overflow: "hidden",
       }}
     >
-      {/* LineWaves background */}
+      {/* ── FloatingLines WebGL background ── */}
       <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
-        <LineWaves
-          speed={0.25}
-          innerLineCount={28.0}
-          outerLineCount={32.0}
-          warpIntensity={0.8}
-          rotation={-30}
-          edgeFadeWidth={0.1}
-          colorCycleSpeed={0.6}
-          brightness={0.18}
-          color1="#024cc6"
-          color2="#6184be"
-          color3="#3B82F6"
-          enableMouseInteraction={true}
-          mouseInfluence={1.8}
+        <FloatingLines
+          linesGradient={[
+            "#0033cc",
+            "#1452b8",
+            "#4fa8ff",
+            "#80d4ff",
+            "#ffffff",
+          ]}
+          enabledWaves={["top", "middle", "bottom"]}
+          lineCount={8}
+          lineDistance={4}
+          bendRadius={8}
+          bendStrength={-2}
+          interactive
+          parallax
+          animationSpeed={1}
+          mixBlendMode="normal"
         />
       </div>
 
-      {/* Black darkening overlay (Phase 2) */}
+      {/* ── Black darkening overlay (Phase 2 Only) ── */}
       <div
         style={{
           position: "absolute",
           inset: 0,
           zIndex: 1,
-          backgroundColor: "rgba(0,0,0,0.45)",
+          backgroundColor: "rgba(0, 0, 0, 0.45)",
           opacity: phase2 ? 1 : 0,
           transition: "opacity 800ms ease",
           pointerEvents: "none",
         }}
       />
 
-      {/* Noise grain overlay */}
+      {/* ── Noise grain overlay ── */}
       <div
         style={{
           position: "absolute",
@@ -107,7 +139,9 @@ export default function DesignSection() {
         }}
       />
 
-      {/* ── PHASE 1 ── */}
+      {/* =========================================
+          PHASE 1: Intro
+          ========================================= */}
       <div
         style={{
           position: "absolute",
@@ -119,18 +153,22 @@ export default function DesignSection() {
           transform: phase2 ? "translateY(-40px)" : "translateY(0)",
         }}
       >
+        {/* ── CENTER TEXT BLOCK ── */}
         <div
+        className="hidden sm:flex"
           style={{
             position: "absolute",
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
             textAlign: "center",
-            display: "flex",
             flexDirection: "column",
             alignItems: "center",
+            width: "100%",
+            padding: "0 24px",
           }}
         >
+          {/* Small label */}
           <div
             style={{
               fontFamily: "var(--font-mono)",
@@ -142,75 +180,101 @@ export default function DesignSection() {
               opacity: 0.7,
             }}
           >
-            III • V PILLARS
+            II • V PILLARS
           </div>
-          <div style={{ whiteSpace: "nowrap" }}>
-            <BlurText
-              text="Breathing with the design"
-              animateBy="words"
-              direction="top"
-              delay={200}
-              className="font-[var(--font-courier)] text-[clamp(2.5rem,5vw,4.5rem)] font[400] tracking-[0.04em] text-white opacity-100"
-            />
-          </div>
+
+          {/* Main headline — desktop only */}
+          <BlurText
+            text="Making products that people love"
+            animateBy="words"
+            direction="top"
+            delay={200}
+            className="font-[var(--font-courier)] text-[clamp(1.9rem,6vw,4.5rem)] font-[400] tracking-[0.04em] text-white opacity-100 text-center leading-tight"
+          />
         </div>
 
+        {/* MOBILE: headline — bottom-left editorial layout */}
+        <div
+          className="sm:hidden"
+          style={{
+            position: "absolute",
+            left: "24px",
+            right: "24px",
+            bottom: "170px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            zIndex: 10,
+            pointerEvents: "none",
+          }}
+        >
+          <div
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "10px",
+              letterSpacing: "0.2em",
+              color: "white",
+              textTransform: "uppercase",
+              marginBottom: "12px",
+              opacity: 0.7,
+            }}
+          >
+            II • V PILLARS
+          </div>
+          <BlurText
+            text="Making products that people love"
+            animateBy="words"
+            direction="top"
+            delay={200}
+            className="font-[var(--font-courier)] text-[clamp(2rem,10vw,3.5rem)] font-[400] tracking-[0.01em] text-white opacity-100 text-left leading-[1.06]"
+          />
+        </div>
+
+        {/* ── DESKTOP: bottom-left category list ── */}
         <ul
+          className="hidden sm:flex"
           style={{
             position: "absolute",
             bottom: "60px",
             left: "40px",
-            display: "flex",
             flexDirection: "column",
             gap: "14px",
+            alignItems: "flex-start",
+            textAlign: "left",
             listStyle: "none",
             margin: 0,
             padding: 0,
             opacity: showDelayed ? 0.85 : 0,
             transform: showDelayed ? "translateY(0)" : "translateY(16px)",
-            transition: "opacity 1000ms ease, transform 1000ms ease",
+            transition: "opacity 800ms ease, transform 800ms ease",
             transitionDelay: "700ms",
           }}
         >
-          {pillars.map((p, i) => (
+          {categories.map((cat, idx) => (
             <li
-              key={i}
+              key={idx}
               style={{
                 fontFamily: "var(--font-mono)",
                 fontSize: "11px",
                 letterSpacing: "0.15em",
                 textTransform: "uppercase",
                 color: "white",
+                cursor: "default",
                 display: "flex",
                 alignItems: "center",
                 gap: "10px",
               }}
             >
-              <span
-                style={{
-                  width: "4px",
-                  height: "4px",
-                  borderRadius: "50%",
-                  background: "white",
-                  opacity: 0.6,
-                  flexShrink: 0,
-                }}
-              />
-              {p}
+              <span style={{ width: "4px", height: "4px", borderRadius: "50%", background: "white", opacity: 0.6, flexShrink: 0 }} />
+              {cat}
             </li>
           ))}
         </ul>
 
+        {/* ── DESKTOP: bottom-right CTA (hidden on mobile) ── */}
         <button
-          onClick={() => {
-            setScrollProgress(1);
-            setPhase2(true);
-            setTimeout(() => {
-              if (gridRef.current) {
-                gridRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-              }
-            }, 100);
-          }}
+          className="hidden sm:block"
+          onClick={() => { setScrollProgress(1); setPhase2(true); }}
           style={{
             position: "absolute",
             bottom: "40px",
@@ -225,71 +289,141 @@ export default function DesignSection() {
             cursor: "pointer",
             opacity: showDelayed ? 1 : 0,
             transform: showDelayed ? "translateY(0)" : "translateY(16px)",
-            transition:
-              "opacity 300ms ease, transform 300ms ease, border-color 300ms ease, box-shadow 300ms ease",
+            transition: "opacity 300ms ease, transform 300ms ease, border-color 300ms ease",
             transitionDelay: showDelayed ? "900ms" : "0ms",
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "var(--border-hover)";
-            e.currentTarget.style.boxShadow = "0 0 24px rgba(167,139,250,0.35)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "white";
-            e.currentTarget.style.boxShadow = "none";
-          }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-hover)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "white"; }}
         >
-          See our work
+          Book a free call
         </button>
 
-        <div
+        {/* ── DESKTOP: scroll down button centered at bottom (hidden on mobile) ── */}
+        <button
+          className="hidden sm:block group"
+          onClick={() => {
+            setScrollProgress(1);
+            setPhase2(true);
+            setTimeout(() => {
+              if (gridRef.current) {
+                gridRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+              }
+            }, 100);
+          }}
+          aria-label="Scroll down"
           style={{
             position: "absolute",
             bottom: "40px",
             left: "50%",
             transform: "translateX(-50%)",
+            background: "transparent",
+            border: "none",
+            padding: 0,
+            cursor: "pointer",
             opacity: showDelayed ? 1 : 0,
-            transition: "opacity 1000ms ease",
+            transition: "opacity 800ms ease",
             transitionDelay: "1000ms",
+            zIndex: 20,
           }}
         >
-          <svg width="48" height="48" viewBox="0 0 48 48">
+          <svg
+            width="44"
+            height="44"
+            viewBox="0 0 48 48"
+            className="transition-transform duration-300 group-hover:scale-110 group-active:scale-95"
+          >
+            <circle cx="24" cy="24" r="22" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
             <circle
-              cx="24"
-              cy="24"
-              r="22"
-              fill="none"
-              stroke="rgba(255,255,255,0.15)"
-              strokeWidth="1"
-            />
-            <circle
-              cx="24"
-              cy="24"
-              r="22"
-              fill="none"
-              stroke="white"
-              strokeWidth="1.5"
+              cx="24" cy="24" r="22" fill="none" stroke="white" strokeWidth="1.5"
               strokeDasharray={2 * Math.PI * 22}
               strokeDashoffset={2 * Math.PI * 22 * (1 - scrollProgress)}
               strokeLinecap="round"
-              style={{
-                transformOrigin: "24px 24px",
-                transform: "rotate(-90deg)",
-                transition: "stroke-dashoffset 0.1s linear",
-              }}
+              style={{ transformOrigin: "24px 24px", transform: "rotate(-90deg)", transition: "stroke-dashoffset 80ms linear" }}
             />
-            <path
-              d="M24 16 L24 32 M18 26 L24 32 L30 26"
-              fill="none"
-              stroke="white"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+            <path d="M24 16 L24 32 M18 26 L24 32 L30 26" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
+        </button>
+
+        {/* ── MOBILE: split bottom layout — left content + right icon ── */}
+        <div
+          className="sm:hidden"
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "space-between",
+            padding: "0 24px 36px",
+            opacity: showDelayed ? 1 : 0,
+            transform: showDelayed ? "translateY(0)" : "translateY(16px)",
+            transition: "opacity 800ms ease, transform 800ms ease",
+            transitionDelay: "700ms",
+          }}
+        >
+          {/* LEFT: category list + Contact us CTA */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "8px" }}>
+              {categories.map((cat, idx) => (
+                <li
+                  key={idx}
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "10px",
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                    color: "rgba(255,255,255,0.7)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    cursor: "default",
+                  }}
+                >
+                  <span style={{ width: "3px", height: "3px", borderRadius: "50%", background: "white", opacity: 0.5, flexShrink: 0 }} />
+                  {cat}
+                </li>
+              ))}
+            </ul>
+            <button
+              onClick={() => { setScrollProgress(1); setPhase2(true); }}
+              style={{
+                background: "transparent",
+                borderRadius: "9999px",
+                border: "1px solid rgba(255,255,255,0.6)",
+                padding: "9px 20px",
+                color: "white",
+                fontFamily: "var(--font-mono)",
+                fontSize: "12px",
+                letterSpacing: "0.04em",
+                cursor: "pointer",
+                alignSelf: "flex-start",
+              }}
+            >
+              Contact us
+            </button>
+          </div>
+
+          {/* RIGHT: scroll icon only */}
+          <div style={{ pointerEvents: "none", flexShrink: 0 }}>
+            <svg width="40" height="40" viewBox="0 0 48 48">
+              <circle cx="24" cy="24" r="22" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
+              <circle
+                cx="24" cy="24" r="22" fill="none" stroke="white" strokeWidth="1.5"
+                strokeDasharray={2 * Math.PI * 22}
+                strokeDashoffset={2 * Math.PI * 22 * (1 - scrollProgress)}
+                strokeLinecap="round"
+                style={{ transformOrigin: "24px 24px", transform: "rotate(-90deg)", transition: "stroke-dashoffset 80ms linear" }}
+              />
+              <path d="M24 16 L24 32 M18 26 L24 32 L30 26" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
         </div>
       </div>
 
-      {/* ── PHASE 2 ── */}
+      {/* =========================================
+          PHASE 2: Process Detail
+          ========================================= */}
       <div
         ref={scrollContainerRef}
         style={{
@@ -311,19 +445,28 @@ export default function DesignSection() {
         }}
         onScroll={(e) => {
           const st = e.target.scrollTop;
-          document.dispatchEvent(
-            new CustomEvent("hide-nav", { detail: { hidden: st > 50 } }),
-          );
+          if (st > 50) {
+            document.dispatchEvent(
+              new CustomEvent("hide-nav", { detail: { hidden: true } }),
+            );
+          } else {
+            document.dispatchEvent(
+              new CustomEvent("hide-nav", { detail: { hidden: false } }),
+            );
+          }
         }}
       >
-        {/* Dark process section */}
+        {/* ── OLD DARK PROCESS SECTION ── */}
         <div style={{ padding: "120px 80px 120px", flexShrink: 0 }}>
           <div style={{ maxWidth: "800px", marginBottom: "80px" }}>
             <h2
               className="font-[var(--font-courier)] text-[clamp(2.5rem,5vw,4.5rem)] font-[400] tracking-[0.04em] text-white"
-              style={{ lineHeight: 1.2, marginBottom: "30px" }}
+              style={{
+                lineHeight: 1.2,
+                marginBottom: "30px",
+              }}
             >
-              Breathing with the design
+              Making products that people love
             </h2>
             <p
               style={{
@@ -334,12 +477,13 @@ export default function DesignSection() {
                 maxWidth: "680px",
               }}
             >
-              Shape a product identity users recognize, trust and enjoy every
-              day across brand, interface and system design.
+              Design the right digital product before you build it: IMPPECCABLES
+              turns ideas, data and user insight into a clear, validated product
+              direction.
             </p>
           </div>
 
-          {/* Grid */}
+          {/* ── GRID SECTION ── */}
           <div
             ref={gridRef}
             style={{
@@ -351,6 +495,7 @@ export default function DesignSection() {
               borderBottom: "1px solid rgba(255,255,255,0.15)",
             }}
           >
+            {/* Vertical dividers */}
             <div
               style={{
                 position: "absolute",
@@ -382,6 +527,7 @@ export default function DesignSection() {
               }}
             />
 
+            {/* Row 1: Headers */}
             <div
               style={{
                 display: "grid",
@@ -390,11 +536,11 @@ export default function DesignSection() {
               }}
             >
               {[
-                "Branding",
-                "UI Design",
-                "Design System",
-                "Ideation & Prototyping",
-              ].map((t, i) => (
+                "Product Vision & Strategy",
+                "Product Design",
+                "Prototyping",
+                "Delivery & Planning",
+              ].map((title, i) => (
                 <div
                   key={i}
                   style={{
@@ -405,11 +551,12 @@ export default function DesignSection() {
                     letterSpacing: "0.05em",
                   }}
                 >
-                  {t}
+                  {title}
                 </div>
               ))}
             </div>
 
+            {/* Horizontal Timeline Line */}
             <div
               style={{
                 position: "relative",
@@ -418,10 +565,11 @@ export default function DesignSection() {
                 background: "rgba(255,255,255,0.3)",
               }}
             >
+              {/* White dot */}
               <div
                 style={{
                   position: "absolute",
-                  left: "25%",
+                  left: "50%",
                   top: "50%",
                   transform: "translate(-50%, -50%)",
                   width: "10px",
@@ -431,6 +579,7 @@ export default function DesignSection() {
                   boxShadow: "0 0 10px rgba(255,255,255,0.5)",
                 }}
               />
+              {/* Right arrow */}
               <div
                 style={{
                   position: "absolute",
@@ -445,6 +594,7 @@ export default function DesignSection() {
               </div>
             </div>
 
+            {/* Row 2: Lists */}
             <div
               style={{
                 display: "grid",
@@ -452,58 +602,114 @@ export default function DesignSection() {
                 padding: "40px 0",
               }}
             >
-              {[
-                [
-                  "Brand Positioning",
-                  "Product Narrative",
-                  "Visual Identity System",
-                  "Voice and Tone",
-                ],
-                [
-                  "Information Architecture",
-                  "Interaction Design",
-                  "Responsive Layouts",
-                  "Microinteractions",
-                ],
-                [
-                  "Design Tokens",
-                  "Component Library",
-                  "Usage Guidelines",
-                  "Design Ops Support",
-                ],
-                [
-                  "Concept Workshops",
-                  "Rapid Wireframing",
-                  "Interactive Prototypes",
-                  "Usability Experiments",
-                ],
-              ].map((col, ci) => (
-                <div
-                  key={ci}
-                  style={{
-                    padding: "0 40px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "16px",
-                  }}
-                >
-                  {col.map((item) => (
-                    <div
-                      key={item}
-                      style={{
-                        fontSize: "15px",
-                        fontFamily: "var(--font-sans, system-ui, sans-serif)",
-                        color: "rgba(255,255,255,0.9)",
-                      }}
-                    >
-                      {item}
-                    </div>
-                  ))}
-                </div>
-              ))}
+              <div
+                style={{
+                  padding: "0 40px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px",
+                }}
+              >
+                {[
+                  "Market Research",
+                  "Stakeholder Interviews",
+                  "Product Vision",
+                  "Product Strategy",
+                ].map((item) => (
+                  <div
+                    key={item}
+                    style={{
+                      fontSize: "15px",
+                      fontFamily: "var(--font-sans, system-ui, sans-serif)",
+                      color: "rgba(255,255,255,0.9)",
+                    }}
+                  >
+                    {item}
+                  </div>
+                ))}
+              </div>
+              <div
+                style={{
+                  padding: "0 40px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px",
+                }}
+              >
+                {[
+                  "User Interviews",
+                  "Workflows",
+                  "User Journey",
+                  "Technical Recommendations",
+                ].map((item) => (
+                  <div
+                    key={item}
+                    style={{
+                      fontSize: "15px",
+                      fontFamily: "var(--font-sans, system-ui, sans-serif)",
+                      color: "rgba(255,255,255,0.9)",
+                    }}
+                  >
+                    {item}
+                  </div>
+                ))}
+              </div>
+              <div
+                style={{
+                  padding: "0 40px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px",
+                }}
+              >
+                {[
+                  "Figma Prototyping",
+                  "Visual Design Research",
+                  "User Testing",
+                  "Engineering Validations",
+                ].map((item) => (
+                  <div
+                    key={item}
+                    style={{
+                      fontSize: "15px",
+                      fontFamily: "var(--font-sans, system-ui, sans-serif)",
+                      color: "rgba(255,255,255,0.9)",
+                    }}
+                  >
+                    {item}
+                  </div>
+                ))}
+              </div>
+              <div
+                style={{
+                  padding: "0 40px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px",
+                }}
+              >
+                {[
+                  "Visual Design Approbation",
+                  "Roadmap",
+                  "Deliverables",
+                  "Milestones",
+                ].map((item) => (
+                  <div
+                    key={item}
+                    style={{
+                      fontSize: "15px",
+                      fontFamily: "var(--font-sans, system-ui, sans-serif)",
+                      color: "rgba(255,255,255,0.9)",
+                    }}
+                  >
+                    {item}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
+          {/* Footer Note */}
           <div
             style={{
               marginTop: "40px",
@@ -533,7 +739,7 @@ export default function DesignSection() {
           </div>
         </div>
 
-        {/* ── WHITE SECTION ── */}
+        {/* ── NEW WHITE SECTION ── */}
         <div style={{ backgroundColor: "#fff", color: "black", flexShrink: 0 }}>
           <div
             style={{
@@ -544,7 +750,7 @@ export default function DesignSection() {
               margin: "0 auto",
             }}
           >
-            {/* Top row */}
+            {/* Top row: Headline and Description */}
             <div
               style={{
                 display: "flex",
@@ -554,6 +760,7 @@ export default function DesignSection() {
                 gap: "40px",
               }}
             >
+              {/* Left side */}
               <div style={{ flex: 1, position: "relative" }}>
                 <h2
                   className="font-[var(--font-courier)]"
@@ -562,6 +769,7 @@ export default function DesignSection() {
                     fontWeight: 400,
                     lineHeight: 1.2,
                     margin: 0,
+                    textTransform: "none",
                   }}
                 >
                   Unleash Your
@@ -579,6 +787,7 @@ export default function DesignSection() {
                   />
                 </div>
               </div>
+              {/* Right side */}
               <div style={{ flex: 1, maxWidth: "500px", marginTop: "16px" }}>
                 <p
                   style={{
@@ -589,14 +798,14 @@ export default function DesignSection() {
                     margin: 0,
                   }}
                 >
-                  Unleash your product&apos;s potential by shaping a cohesive
-                  brand, interface and design system that make every interaction
-                  clear, consistent and unmistakably yours.
+                  Unleash your product&apos;s potential by grounding every
+                  decision in research, strategy and real user needs, so you
+                  only invest in digital products the market actually wants.
                 </p>
               </div>
             </div>
 
-            {/* 2×2 cards */}
+            {/* Grid row: 2x2 Cards */}
             <div
               style={{
                 display: "grid",
@@ -606,24 +815,24 @@ export default function DesignSection() {
             >
               {[
                 {
-                  title: "BRANDING",
+                  title: "PRODUCT VISION",
                   description:
-                    "We build product brands that feel native to your market: clear positioning, strong storytelling and visuals that users remember inside and outside the app.",
+                    "Define a sharp digital product vision grounded in market reality. IMPPECCABLES aligns stakeholders, data and business goals to shape a winning product strategy.",
                 },
                 {
-                  title: "UI DESIGN",
+                  title: "PRODUCT DESIGN",
                   description:
-                    "We design intuitive interfaces that turn your brand and strategy into clear screens, flows and interactions that users understand without a manual.",
+                    "Turn strategy into user-centric experiences. IMPPECCABLES maps journeys, workflows and UX foundations that make your digital product intuitive and effective.",
                 },
                 {
-                  title: "DESIGN SYSTEM",
+                  title: "PROTOTYPING",
                   description:
-                    "We create scalable design systems that align product, design and engineering, speeding up delivery while keeping every release visually consistent.",
+                    "Prototype fast, learn fast. IMPPECCABLES builds realistic product prototypes to validate ideas, UX and technology before you commit development resources.",
                 },
                 {
-                  title: "IDEATION & PROTOTYPING",
+                  title: "DELIVERY & PLANNING",
                   description:
-                    "We turn ideas into tangible product experiences through collaborative workshops, fast prototypes and tests that validate what really works.",
+                    "From concept to delivery, IMPPECCABLES structures plans, assets and milestones so your teams can build the product with clarity, speed and alignment.",
                 },
               ].map((card, idx) => (
                 <div
@@ -641,6 +850,7 @@ export default function DesignSection() {
                   >
                     {card.title}
                   </span>
+
                   <p
                     style={{
                       fontFamily: "var(--font-sans, system-ui, sans-serif)",
@@ -658,7 +868,7 @@ export default function DesignSection() {
             </div>
           </div>
 
-          {/* ScrollVelocity marquee */}
+          {/* ── SCROLL VELOCITY TEXT ── */}
           <div
             style={{
               marginTop: "120px",
@@ -669,13 +879,14 @@ export default function DesignSection() {
           >
             <ScrollVelocity
               texts={[
-                "Cohesive brand · Intuitive interfaces · Scalable systems \u00A0 \u00A0 \u00A0 \u00A0 \u00A0 ",
+                "Complex problems to product execution \u00A0 \u00A0 \u00A0 \u00A0 \u00A0 ",
               ]}
               velocity={50}
               scrollContainerRef={scrollContainerRef}
               className="font-[var(--font-poppins)] text-[clamp(4rem,10vw,8rem)] font-[400] tracking-[-0.04em] text-black"
             />
           </div>
+
           {/* ── CLIENT PROJECTS GRID ── */}
           <div
             style={{
@@ -757,7 +968,8 @@ export default function DesignSection() {
               ))}
             </div>
           </div>
-          {/* CTA */}
+
+          {/* ── BOTTOM CTA SECTION ── */}
           <div
             style={{
               padding: "80px 80px 160px",
@@ -800,7 +1012,9 @@ export default function DesignSection() {
               >
                 Be the next
               </span>
+
               <div className="relative flex items-center justify-center w-14 h-14">
+                {/* Solid black circle */}
                 <div className="absolute w-10 h-10 rounded-full bg-black text-white flex items-center justify-center">
                   <svg
                     width="18"
@@ -820,6 +1034,8 @@ export default function DesignSection() {
                     <path d="M15 5l7 7-7 7" />
                   </svg>
                 </div>
+
+                {/* Drawing ring */}
                 <svg
                   className="absolute inset-0 w-full h-full pointer-events-none"
                   viewBox="0 0 56 56"
@@ -845,17 +1061,18 @@ export default function DesignSection() {
           </div>
         </div>
 
-        {/* ── FOOTER ── */}
+        {/* ── FOOTER SECTION ── */}
         <div
           style={{
             position: "relative",
             width: "100%",
-            backgroundColor: "rgba(0,0,0,0.5)",
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
             color: "white",
             overflow: "hidden",
             flexShrink: 0,
           }}
         >
+          {/* Local noise grain overlay for the footer */}
           <div
             style={{
               position: "absolute",
@@ -868,6 +1085,7 @@ export default function DesignSection() {
               zIndex: 0,
             }}
           />
+
           <div
             style={{
               position: "relative",
@@ -877,6 +1095,7 @@ export default function DesignSection() {
               margin: "0 auto",
             }}
           >
+            {/* Top Row: Let's build... and Work together */}
             <div
               style={{
                 display: "flex",
@@ -892,6 +1111,7 @@ export default function DesignSection() {
                   fontWeight: 400,
                   lineHeight: 1.1,
                   margin: 0,
+                  textTransform: "none",
                 }}
               >
                 Let&apos;s
@@ -902,6 +1122,7 @@ export default function DesignSection() {
                 <br />
                 great...
               </h2>
+
               <button
                 className="group flex items-center bg-transparent border-none cursor-pointer"
                 style={{ paddingBottom: "20px" }}
@@ -914,7 +1135,7 @@ export default function DesignSection() {
                     marginRight: "24px",
                   }}
                 >
-                  Work together
+                  Work togheter
                 </span>
                 <div
                   className="flex items-center justify-center rounded-full border border-white/40 group-hover:border-white transition-colors"
@@ -937,6 +1158,7 @@ export default function DesignSection() {
               </button>
             </div>
 
+            {/* Links Grid */}
             <div
               style={{
                 display: "grid",
@@ -945,6 +1167,7 @@ export default function DesignSection() {
                 borderBottom: "1px solid rgba(255,255,255,0.15)",
               }}
             >
+              {/* Column 1: SOCIAL */}
               <div
                 style={{
                   padding: "40px 40px 40px 0",
@@ -972,18 +1195,24 @@ export default function DesignSection() {
                     fontWeight: 500,
                   }}
                 >
-                  {["Linkedin", "Instagram"].map((s) => (
-                    <a
-                      key={s}
-                      href="#"
-                      className="hover:opacity-70 transition-opacity"
-                      style={{ color: "white", textDecoration: "none" }}
-                    >
-                      {s}
-                    </a>
-                  ))}
+                  <a
+                    href="#"
+                    className="hover:opacity-70 transition-opacity"
+                    style={{ color: "white", textDecoration: "none" }}
+                  >
+                    Linkedin
+                  </a>
+                  <a
+                    href="#"
+                    className="hover:opacity-70 transition-opacity"
+                    style={{ color: "white", textDecoration: "none" }}
+                  >
+                    Instagram
+                  </a>
                 </div>
               </div>
+
+              {/* Column 2: LOUD */}
               <div
                 style={{
                   padding: "40px",
@@ -1000,7 +1229,7 @@ export default function DesignSection() {
                     margin: "0 0 24px 0",
                   }}
                 >
-                  Innosphere
+                  IMPPECCABLES
                 </h4>
                 <div
                   style={{
@@ -1024,6 +1253,8 @@ export default function DesignSection() {
                   ))}
                 </div>
               </div>
+
+              {/* Column 3: CONTACT */}
               <div style={{ padding: "40px 0 40px 40px" }}>
                 <h4
                   style={{
@@ -1037,24 +1268,36 @@ export default function DesignSection() {
                 >
                   Contact
                 </h4>
-                <a
-                  href="#"
-                  className="hover:opacity-70 transition-opacity"
+                <div
                   style={{
-                    color: "white",
-                    textDecoration: "none",
+                    display: "flex",
+                    gap: "32px",
+                    flexWrap: "wrap",
                     fontFamily: "var(--font-sans, system-ui, sans-serif)",
                     fontSize: "13px",
                     fontWeight: 500,
                   }}
                 >
-                  Contact Us
-                </a>
+                  {["Contact Us"].map((item) => (
+                    <a
+                      key={item}
+                      href="#"
+                      className="hover:opacity-70 transition-opacity"
+                      style={{ color: "white", textDecoration: "none" }}
+                    >
+                      {item}
+                    </a>
+                  ))}
+                </div>
               </div>
             </div>
 
+            {/* Bottom Row */}
             <div
-              style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr 1fr" }}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1.5fr 1fr",
+              }}
             >
               <div
                 style={{
@@ -1074,7 +1317,7 @@ export default function DesignSection() {
                   color: "rgba(255,255,255,0.6)",
                 }}
               >
-                Innosphere digital - a company which turns complexity into
+                IMPPECCABLES digital - a company which turns complexity into
                 elegance.
               </div>
               <div

@@ -1,43 +1,38 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import BlurText from "./BlurText";
-import FloatingLines from "@/components/BgFloatingLines";
-import ScrollVelocity from "./ScrollVelocity";
-import { cn } from "@/lib/utils";
+import BlurText from "@/components/ui/BlurText";
+import { GridScan } from "@/components/ui/BgGridScan";
+import ScrollVelocity from "@/components/ui/ScrollVelocity";
 
-export default function ThinkSection() {
+export default function DevelopSection() {
   const [showDelayed, setShowDelayed] = useState(false);
   const [phase2, setPhase2] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
-  const scrollContainerRef = useRef(null);
   const [hovered, setHovered] = useState(false);
+  const scrollContainerRef = useRef(null);
   const gridRef = useRef(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowDelayed(true);
-    }, 100);
+    const timer = setTimeout(() => setShowDelayed(true), 100);
     return () => clearTimeout(timer);
   }, []);
+
+  const touchStartY = useRef(null);
 
   useEffect(() => {
     const handleWheel = (e) => {
       if (!phase2) {
         if (e.deltaY > 0) {
           setScrollProgress((prev) => {
-            const next = prev + 0.03; // Adjust sensitivity
-            if (next >= 1) {
-              setPhase2(true);
-              return 1;
-            }
+            const next = prev + 0.03;
+            if (next >= 1) { setPhase2(true); return 1; }
             return next;
           });
         } else {
           setScrollProgress((prev) => Math.max(0, prev - 0.05));
         }
       } else {
-        // In Phase 2, if we scroll up and are at the top of the container, go back to Phase 1
         if (e.deltaY < 0 && scrollContainerRef.current?.scrollTop === 0) {
           setPhase2(false);
           setScrollProgress(0.9);
@@ -45,11 +40,26 @@ export default function ThinkSection() {
       }
     };
 
-    window.addEventListener("wheel", handleWheel);
-    return () => window.removeEventListener("wheel", handleWheel);
+    const handleTouchStart = (e) => { touchStartY.current = e.touches[0].clientY; };
+    const handleTouchEnd = (e) => {
+      if (touchStartY.current === null) return;
+      const delta = touchStartY.current - e.changedTouches[0].clientY;
+      if (!phase2 && delta > 40) { setScrollProgress(1); setPhase2(true); }
+      else if (phase2 && delta < -40 && scrollContainerRef.current?.scrollTop === 0) { setPhase2(false); setScrollProgress(0.9); }
+      touchStartY.current = null;
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: true });
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
   }, [phase2]);
 
-  const categories = [
+  const pillars = [
     "Artificial Intelligence",
     "Full stack engineering",
     "Mobile Apps",
@@ -66,42 +76,44 @@ export default function ThinkSection() {
         overflow: "hidden",
       }}
     >
-      {/* ── FloatingLines WebGL background ── */}
-      <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
-        <FloatingLines
-          linesGradient={[
-            "#0033cc",
-            "#1452b8",
-            "#4fa8ff",
-            "#80d4ff",
-            "#ffffff",
-          ]}
-          enabledWaves={["top", "middle", "bottom"]}
-          lineCount={8}
-          lineDistance={4}
-          bendRadius={8}
-          bendStrength={-2}
-          interactive
-          parallax
-          animationSpeed={1}
-          mixBlendMode="normal"
+      {/* GridScan background */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 0,
+          width: "100%",
+          height: "100%",
+        }}
+      >
+        <GridScan
+          sensitivity={0.55}
+          lineThickness={1}
+          linesColor="#2F293A"
+          gridScale={0.1}
+          scanColor="#9d9ef8"
+          scanOpacity={0.4}
+          enablePost
+          bloomIntensity={0.6}
+          chromaticAberration={0.002}
+          noiseIntensity={0.01}
         />
       </div>
 
-      {/* ── Black darkening overlay (Phase 2 Only) ── */}
+      {/* Black darkening overlay (Phase 2) */}
       <div
         style={{
           position: "absolute",
           inset: 0,
           zIndex: 1,
-          backgroundColor: "rgba(0, 0, 0, 0.45)",
+          backgroundColor: "rgba(0,0,0,0.45)",
           opacity: phase2 ? 1 : 0,
           transition: "opacity 800ms ease",
           pointerEvents: "none",
         }}
       />
 
-      {/* ── Noise grain overlay ── */}
+      {/* Noise grain overlay */}
       <div
         style={{
           position: "absolute",
@@ -115,9 +127,7 @@ export default function ThinkSection() {
         }}
       />
 
-      {/* =========================================
-          PHASE 1: Intro
-          ========================================= */}
+      {/* ── PHASE 1 ── */}
       <div
         style={{
           position: "absolute",
@@ -129,24 +139,51 @@ export default function ThinkSection() {
           transform: phase2 ? "translateY(-40px)" : "translateY(0)",
         }}
       >
-        {/* ── CENTER TEXT BLOCK ── */}
         <div
+        className="hidden sm:flex"
           style={{
             position: "absolute",
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
             textAlign: "center",
-            display: "flex",
             flexDirection: "column",
             alignItems: "center",
+            width: "100%",
+            padding: "0 24px",
           }}
         >
-          {/* Small label */}
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: "11px", letterSpacing: "0.2em", color: "white", textTransform: "uppercase", marginBottom: "12px", opacity: 0.7 }}>
+            IV • V PILLARS
+          </div>
+          <BlurText
+            text="Being in the engineering details"
+            animateBy="words"
+            direction="top"
+            delay={200}
+            className="font-[var(--font-courier)] text-[clamp(1.9rem,6vw,4.5rem)] font-[400] tracking-[0.04em] text-white opacity-100 text-center leading-tight"
+          />
+        </div>
+
+        {/* MOBILE: headline — bottom-left editorial layout */}
+        <div
+          className="sm:hidden"
+          style={{
+            position: "absolute",
+            left: "24px",
+            right: "24px",
+            bottom: "170px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            zIndex: 10,
+            pointerEvents: "none",
+          }}
+        >
           <div
             style={{
               fontFamily: "var(--font-mono)",
-              fontSize: "11px",
+              fontSize: "10px",
               letterSpacing: "0.2em",
               color: "white",
               textTransform: "uppercase",
@@ -154,82 +191,47 @@ export default function ThinkSection() {
               opacity: 0.7,
             }}
           >
-            II • V PILLARS
+            IV • V PILLARS
           </div>
-
-          {/* Main headline */}
-          <div style={{ whiteSpace: "nowrap" }}>
-            <BlurText
-              text="Making products that people love"
-              animateBy="words"
-              direction="top"
-              delay={200}
-              className="font-[var(--font-courier)] text-[clamp(2.5rem,5vw,4.5rem)] font[400] tracking-[0.04em] text-white opacity-100"
-            />
-          </div>
+          <BlurText
+            text="Being in the engineering details"
+            animateBy="words"
+            direction="top"
+            delay={200}
+            className="font-[var(--font-courier)] text-[clamp(2rem,10vw,3.5rem)] font-[400] tracking-[0.01em] text-white opacity-100 text-left leading-[1.06]"
+          />
         </div>
 
-        {/* ── BOTTOM-LEFT CATEGORY LIST ── */}
+        {/* Desktop: bottom-left pillar list */}
         <ul
+          className="hidden sm:flex"
           style={{
             position: "absolute",
             bottom: "60px",
             left: "40px",
-            display: "flex",
             flexDirection: "column",
             gap: "14px",
-            alignItems: "flex-start",
-            textAlign: "left",
             listStyle: "none",
             margin: 0,
             padding: 0,
             opacity: showDelayed ? 0.85 : 0,
             transform: showDelayed ? "translateY(0)" : "translateY(16px)",
-            transition: "opacity 1000ms ease, transform 1000ms ease",
+            transition: "opacity 800ms ease, transform 800ms ease",
             transitionDelay: "700ms",
           }}
         >
-          {categories.map((cat, idx) => (
-            <li
-              key={idx}
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: "11px",
-                letterSpacing: "0.15em",
-                textTransform: "uppercase",
-                color: "white",
-                cursor: "default",
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-              }}
-            >
-              <span
-                style={{
-                  width: "4px",
-                  height: "4px",
-                  borderRadius: "50%",
-                  background: "white",
-                  opacity: 0.6,
-                  flexShrink: 0,
-                }}
-              />
-              {cat}
+          {pillars.map((p, i) => (
+            <li key={i} style={{ fontFamily: "var(--font-mono)", fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", color: "white", display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{ width: "4px", height: "4px", borderRadius: "50%", background: "white", opacity: 0.6, flexShrink: 0 }} />
+              {p}
             </li>
           ))}
         </ul>
 
-        {/* ── BOTTOM-RIGHT CTA BUTTON ── */}
+        {/* Desktop: bottom-right CTA */}
         <button
-          onClick={() => {
-            setScrollProgress(1);
-            setPhase2(true);
-            setTimeout(() => {
-              if (gridRef.current) {
-                gridRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-              }
-            }, 100);
-          }}
+          className="hidden sm:block"
+          onClick={() => { setScrollProgress(1); setPhase2(true); }}
           style={{
             position: "absolute",
             bottom: "40px",
@@ -244,74 +246,139 @@ export default function ThinkSection() {
             cursor: "pointer",
             opacity: showDelayed ? 1 : 0,
             transform: showDelayed ? "translateY(0)" : "translateY(16px)",
-            transition:
-              "opacity 300ms ease, transform 300ms ease, border-color 300ms ease, box-shadow 300ms ease",
+            transition: "opacity 300ms ease, transform 300ms ease, border-color 300ms ease",
             transitionDelay: showDelayed ? "900ms" : "0ms",
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "var(--border-hover)";
-            e.currentTarget.style.boxShadow = "0 0 24px rgba(124,58,237,0.3)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "white";
-            e.currentTarget.style.boxShadow = "none";
-          }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-hover)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "white"; }}
         >
-          Book a free call
+          View case studies
         </button>
 
-        {/* ── SCROLL PROGRESS INDICATOR ── */}
-        <div
+        {/* ── Scroll down button animation (desktop only, centered at bottom) ── */}
+        <button
+          className="hidden sm:block group"
+          onClick={() => {
+            setScrollProgress(1);
+            setPhase2(true);
+            setTimeout(() => {
+              if (gridRef.current) {
+                gridRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+              }
+            }, 100);
+          }}
+          aria-label="Scroll down"
           style={{
             position: "absolute",
             bottom: "40px",
             left: "50%",
             transform: "translateX(-50%)",
+            background: "transparent",
+            border: "none",
+            padding: 0,
+            cursor: "pointer",
             opacity: showDelayed ? 1 : 0,
-            transition: "opacity 1000ms ease",
+            transition: "opacity 800ms ease",
             transitionDelay: "1000ms",
+            zIndex: 20,
           }}
         >
-          <svg width="48" height="48" viewBox="0 0 48 48">
+          <svg
+            width="44"
+            height="44"
+            viewBox="0 0 48 48"
+            className="transition-transform duration-300 group-hover:scale-110 group-active:scale-95"
+          >
+            <circle cx="24" cy="24" r="22" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
             <circle
-              cx="24"
-              cy="24"
-              r="22"
-              fill="none"
-              stroke="rgba(255,255,255,0.15)"
-              strokeWidth="1"
-            />
-            <circle
-              cx="24"
-              cy="24"
-              r="22"
-              fill="none"
-              stroke="white"
-              strokeWidth="1.5"
+              cx="24" cy="24" r="22" fill="none" stroke="white" strokeWidth="1.5"
               strokeDasharray={2 * Math.PI * 22}
               strokeDashoffset={2 * Math.PI * 22 * (1 - scrollProgress)}
               strokeLinecap="round"
-              style={{
-                transformOrigin: "24px 24px",
-                transform: "rotate(-90deg)",
-                transition: "stroke-dashoffset 0.1s linear",
-              }}
+              style={{ transformOrigin: "24px 24px", transform: "rotate(-90deg)", transition: "stroke-dashoffset 80ms linear" }}
             />
-            <path
-              d="M24 16 L24 32 M18 26 L24 32 L30 26"
-              fill="none"
-              stroke="white"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+            <path d="M24 16 L24 32 M18 26 L24 32 L30 26" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
+        </button>
+
+        {/* ── MOBILE: split bottom layout — left content + right icon ── */}
+        <div
+          className="sm:hidden"
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "space-between",
+            padding: "0 24px 36px",
+            opacity: showDelayed ? 1 : 0,
+            transform: showDelayed ? "translateY(0)" : "translateY(16px)",
+            transition: "opacity 800ms ease, transform 800ms ease",
+            transitionDelay: "700ms",
+          }}
+        >
+          {/* LEFT: pillar list + Contact us CTA */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "8px" }}>
+              {pillars.map((p, i) => (
+                <li
+                  key={i}
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "10px",
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                    color: "rgba(255,255,255,0.7)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    cursor: "default",
+                  }}
+                >
+                  <span style={{ width: "3px", height: "3px", borderRadius: "50%", background: "white", opacity: 0.5, flexShrink: 0 }} />
+                  {p}
+                </li>
+              ))}
+            </ul>
+            <button
+              onClick={() => { setScrollProgress(1); setPhase2(true); }}
+              style={{
+                background: "transparent",
+                borderRadius: "9999px",
+                border: "1px solid rgba(255,255,255,0.6)",
+                padding: "9px 20px",
+                color: "white",
+                fontFamily: "var(--font-mono)",
+                fontSize: "12px",
+                letterSpacing: "0.04em",
+                cursor: "pointer",
+                alignSelf: "flex-start",
+              }}
+            >
+              Contact us
+            </button>
+          </div>
+
+          {/* RIGHT: scroll icon only */}
+          <div style={{ pointerEvents: "none", flexShrink: 0 }}>
+            <svg width="40" height="40" viewBox="0 0 48 48">
+              <circle cx="24" cy="24" r="22" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
+              <circle
+                cx="24" cy="24" r="22" fill="none" stroke="white" strokeWidth="1.5"
+                strokeDasharray={2 * Math.PI * 22}
+                strokeDashoffset={2 * Math.PI * 22 * (1 - scrollProgress)}
+                strokeLinecap="round"
+                style={{ transformOrigin: "24px 24px", transform: "rotate(-90deg)", transition: "stroke-dashoffset 80ms linear" }}
+              />
+              <path d="M24 16 L24 32 M18 26 L24 32 L30 26" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
         </div>
       </div>
 
-      {/* =========================================
-          PHASE 2: Process Detail
-          ========================================= */}
+      {/* ── PHASE 2 ── */}
       <div
         ref={scrollContainerRef}
         style={{
@@ -333,28 +400,19 @@ export default function ThinkSection() {
         }}
         onScroll={(e) => {
           const st = e.target.scrollTop;
-          if (st > 50) {
-            document.dispatchEvent(
-              new CustomEvent("hide-nav", { detail: { hidden: true } }),
-            );
-          } else {
-            document.dispatchEvent(
-              new CustomEvent("hide-nav", { detail: { hidden: false } }),
-            );
-          }
+          document.dispatchEvent(
+            new CustomEvent("hide-nav", { detail: { hidden: st > 50 } }),
+          );
         }}
       >
-        {/* ── OLD DARK PROCESS SECTION ── */}
+        {/* Dark process section */}
         <div style={{ padding: "120px 80px 120px", flexShrink: 0 }}>
           <div style={{ maxWidth: "800px", marginBottom: "80px" }}>
             <h2
               className="font-[var(--font-courier)] text-[clamp(2.5rem,5vw,4.5rem)] font-[400] tracking-[0.04em] text-white"
-              style={{
-                lineHeight: 1.2,
-                marginBottom: "30px",
-              }}
+              style={{ lineHeight: 1.2, marginBottom: "30px" }}
             >
-              Making products that people love
+              Being in the engineering details
             </h2>
             <p
               style={{
@@ -365,13 +423,12 @@ export default function ThinkSection() {
                 maxWidth: "680px",
               }}
             >
-              Design the right digital product before you build it: INNOSPHERE
-              turns ideas, data and user insight into a clear, validated product
-              direction.
+              Ship reliable digital products end to end: IMPPECCABLES turns
+              thoughtful engineering, mobile excellence and AI automation into
+              scalable, production-ready experiences.
             </p>
           </div>
-
-          {/* ── GRID SECTION ── */}
+          {/* Grid */}
           <div
             ref={gridRef}
             style={{
@@ -383,7 +440,6 @@ export default function ThinkSection() {
               borderBottom: "1px solid rgba(255,255,255,0.15)",
             }}
           >
-            {/* Vertical dividers */}
             <div
               style={{
                 position: "absolute",
@@ -415,7 +471,6 @@ export default function ThinkSection() {
               }}
             />
 
-            {/* Row 1: Headers */}
             <div
               style={{
                 display: "grid",
@@ -424,11 +479,11 @@ export default function ThinkSection() {
               }}
             >
               {[
-                "Product Vision & Strategy",
-                "Product Design",
-                "Prototyping",
-                "Delivery & Planning",
-              ].map((title, i) => (
+                "Full Stack Engineering",
+                "Backend & Frontend",
+                "Mobile Development",
+                "AI and Automation",
+              ].map((t, i) => (
                 <div
                   key={i}
                   style={{
@@ -439,12 +494,11 @@ export default function ThinkSection() {
                     letterSpacing: "0.05em",
                   }}
                 >
-                  {title}
+                  {t}
                 </div>
               ))}
             </div>
 
-            {/* Horizontal Timeline Line */}
             <div
               style={{
                 position: "relative",
@@ -453,11 +507,10 @@ export default function ThinkSection() {
                 background: "rgba(255,255,255,0.3)",
               }}
             >
-              {/* White dot */}
               <div
                 style={{
                   position: "absolute",
-                  left: "50%",
+                  left: "75%",
                   top: "50%",
                   transform: "translate(-50%, -50%)",
                   width: "10px",
@@ -467,7 +520,6 @@ export default function ThinkSection() {
                   boxShadow: "0 0 10px rgba(255,255,255,0.5)",
                 }}
               />
-              {/* Right arrow */}
               <div
                 style={{
                   position: "absolute",
@@ -482,7 +534,6 @@ export default function ThinkSection() {
               </div>
             </div>
 
-            {/* Row 2: Lists */}
             <div
               style={{
                 display: "grid",
@@ -490,114 +541,58 @@ export default function ThinkSection() {
                 padding: "40px 0",
               }}
             >
-              <div
-                style={{
-                  padding: "0 40px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "16px",
-                }}
-              >
-                {[
-                  "Market Research",
-                  "Stakeholder Interviews",
-                  "Product Vision",
-                  "Product Strategy",
-                ].map((item) => (
-                  <div
-                    key={item}
-                    style={{
-                      fontSize: "15px",
-                      fontFamily: "var(--font-sans, system-ui, sans-serif)",
-                      color: "rgba(255,255,255,0.9)",
-                    }}
-                  >
-                    {item}
-                  </div>
-                ))}
-              </div>
-              <div
-                style={{
-                  padding: "0 40px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "16px",
-                }}
-              >
-                {[
-                  "User Interviews",
-                  "Workflows",
-                  "User Journey",
-                  "Technical Recommendations",
-                ].map((item) => (
-                  <div
-                    key={item}
-                    style={{
-                      fontSize: "15px",
-                      fontFamily: "var(--font-sans, system-ui, sans-serif)",
-                      color: "rgba(255,255,255,0.9)",
-                    }}
-                  >
-                    {item}
-                  </div>
-                ))}
-              </div>
-              <div
-                style={{
-                  padding: "0 40px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "16px",
-                }}
-              >
-                {[
-                  "Figma Prototyping",
-                  "Visual Design Research",
-                  "User Testing",
-                  "Engineering Validations",
-                ].map((item) => (
-                  <div
-                    key={item}
-                    style={{
-                      fontSize: "15px",
-                      fontFamily: "var(--font-sans, system-ui, sans-serif)",
-                      color: "rgba(255,255,255,0.9)",
-                    }}
-                  >
-                    {item}
-                  </div>
-                ))}
-              </div>
-              <div
-                style={{
-                  padding: "0 40px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "16px",
-                }}
-              >
-                {[
-                  "Visual Design Approbation",
-                  "Roadmap",
-                  "Deliverables",
-                  "Milestones",
-                ].map((item) => (
-                  <div
-                    key={item}
-                    style={{
-                      fontSize: "15px",
-                      fontFamily: "var(--font-sans, system-ui, sans-serif)",
-                      color: "rgba(255,255,255,0.9)",
-                    }}
-                  >
-                    {item}
-                  </div>
-                ))}
-              </div>
+              {[
+                [
+                  "Architecture & Tech Stack",
+                  "End-to-End Implementation",
+                  "Performance & Scalability",
+                  "DevOps & CI/CD",
+                ],
+                [
+                  "API Design & Build",
+                  "Frontend Feature Delivery",
+                  "Security & Compliance",
+                  "Testing & Code Quality",
+                ],
+                [
+                  "Native iOS & Android",
+                  "Cross-Platform Frameworks",
+                  "Mobile UX Optimization",
+                  "Store Readiness & Release",
+                ],
+                [
+                  "Opportunity Assessment",
+                  "Data & Model Strategy",
+                  "Workflow Automation Design",
+                  "Integration & Monitoring",
+                ],
+              ].map((col, ci) => (
+                <div
+                  key={ci}
+                  style={{
+                    padding: "0 40px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "16px",
+                  }}
+                >
+                  {col.map((item) => (
+                    <div
+                      key={item}
+                      style={{
+                        fontSize: "15px",
+                        fontFamily: "var(--font-sans, system-ui, sans-serif)",
+                        color: "rgba(255,255,255,0.9)",
+                      }}
+                    >
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Footer Note */}
           <div
             style={{
               marginTop: "40px",
@@ -627,7 +622,7 @@ export default function ThinkSection() {
           </div>
         </div>
 
-        {/* ── NEW WHITE SECTION ── */}
+        {/* ── WHITE SECTION ── */}
         <div style={{ backgroundColor: "#fff", color: "black", flexShrink: 0 }}>
           <div
             style={{
@@ -638,7 +633,7 @@ export default function ThinkSection() {
               margin: "0 auto",
             }}
           >
-            {/* Top row: Headline and Description */}
+            {/* Top row */}
             <div
               style={{
                 display: "flex",
@@ -648,7 +643,6 @@ export default function ThinkSection() {
                 gap: "40px",
               }}
             >
-              {/* Left side */}
               <div style={{ flex: 1, position: "relative" }}>
                 <h2
                   className="font-[var(--font-courier)]"
@@ -657,7 +651,6 @@ export default function ThinkSection() {
                     fontWeight: 400,
                     lineHeight: 1.2,
                     margin: 0,
-                    textTransform: "none",
                   }}
                 >
                   Unleash Your
@@ -675,7 +668,6 @@ export default function ThinkSection() {
                   />
                 </div>
               </div>
-              {/* Right side */}
               <div style={{ flex: 1, maxWidth: "500px", marginTop: "16px" }}>
                 <p
                   style={{
@@ -686,14 +678,14 @@ export default function ThinkSection() {
                     margin: 0,
                   }}
                 >
-                  Unleash your product&apos;s potential by grounding every
-                  decision in research, strategy and real user needs, so you
-                  only invest in digital products the market actually wants.
+                  Unleash your product&apos;s potential by engineering every
+                  detail web, mobile, AI and automation to deliver faster,
+                  smarter and more reliable experiences to your users.
                 </p>
               </div>
             </div>
 
-            {/* Grid row: 2x2 Cards */}
+            {/* 2×2 cards */}
             <div
               style={{
                 display: "grid",
@@ -703,24 +695,24 @@ export default function ThinkSection() {
             >
               {[
                 {
-                  title: "PRODUCT VISION",
+                  title: "FULL STACK ENGINEERING",
                   description:
-                    "Define a sharp digital product vision grounded in market reality. INNOSPHERE aligns stakeholders, data and business goals to shape a winning product strategy.",
+                    "From database to interface, our full stack engineers design, build and maintain complete digital products that are secure, scalable and ready for real-world usage.",
                 },
                 {
-                  title: "PRODUCT DESIGN",
+                  title: "BACKEND & FRONTEND DEVELOPMENT",
                   description:
-                    "Turn strategy into user-centric experiences. INNOSPHERE maps journeys, workflows and UX foundations that make your digital product intuitive and effective.",
+                    "We build robust backends and sleek frontends that work together seamlessly, turning product requirements into secure APIs and interfaces users actually enjoy.",
                 },
                 {
-                  title: "PROTOTYPING",
+                  title: "MOBILE DEVELOPMENT",
                   description:
-                    "Prototype fast, learn fast. INNOSPHERE builds realistic product prototypes to validate ideas, UX and technology before you commit development resources.",
+                    "We craft high-performance mobile apps that feel native, reliable and aligned with your product, whether users are on iOS, Android or cross-platform solutions.",
                 },
                 {
-                  title: "DELIVERY & PLANNING",
+                  title: "AI & AUTOMATION",
                   description:
-                    "From concept to delivery, INNOSPHERE structures plans, assets and milestones so your teams can build the product with clarity, speed and alignment.",
+                    "We integrate AI and automation into your product to reduce manual work, surface insights and create smarter, more personalized user experiences.",
                 },
               ].map((card, idx) => (
                 <div
@@ -738,7 +730,6 @@ export default function ThinkSection() {
                   >
                     {card.title}
                   </span>
-
                   <p
                     style={{
                       fontFamily: "var(--font-sans, system-ui, sans-serif)",
@@ -756,7 +747,7 @@ export default function ThinkSection() {
             </div>
           </div>
 
-          {/* ── SCROLL VELOCITY TEXT ── */}
+          {/* ScrollVelocity marquee */}
           <div
             style={{
               marginTop: "120px",
@@ -767,7 +758,7 @@ export default function ThinkSection() {
           >
             <ScrollVelocity
               texts={[
-                "Complex problems to product execution \u00A0 \u00A0 \u00A0 \u00A0 \u00A0 ",
+                "Engineering excellence · Mobile mastery · AI-powered products \u00A0 \u00A0 \u00A0 \u00A0 \u00A0 ",
               ]}
               velocity={50}
               scrollContainerRef={scrollContainerRef}
@@ -775,7 +766,7 @@ export default function ThinkSection() {
             />
           </div>
 
-          {/* ── CLIENT PROJECTS GRID ── */}
+          {/* Client projects grid */}
           <div
             style={{
               padding: "0 80px 120px",
@@ -816,7 +807,6 @@ export default function ThinkSection() {
                   key={idx}
                   className="group relative flex flex-col cursor-pointer"
                 >
-                  {/* Image Container */}
                   <div
                     className="relative w-full overflow-hidden mb-[24px]"
                     style={{ aspectRatio: "4/5", backgroundColor: project.bg }}
@@ -830,7 +820,6 @@ export default function ThinkSection() {
                       }}
                     />
                   </div>
-                  {/* Labels */}
                   <span
                     style={{
                       fontFamily: "var(--font-mono)",
@@ -857,7 +846,7 @@ export default function ThinkSection() {
             </div>
           </div>
 
-          {/* ── BOTTOM CTA SECTION ── */}
+          {/* CTA */}
           <div
             style={{
               padding: "80px 80px 160px",
@@ -883,7 +872,6 @@ export default function ThinkSection() {
               <br />
               digital products for forward-thinking clients.
             </h2>
-
             <button
               className="flex items-center cursor-pointer bg-transparent border-none"
               onMouseEnter={() => setHovered(true)}
@@ -900,9 +888,7 @@ export default function ThinkSection() {
               >
                 Be the next
               </span>
-
               <div className="relative flex items-center justify-center w-14 h-14">
-                {/* Solid black circle */}
                 <div className="absolute w-10 h-10 rounded-full bg-black text-white flex items-center justify-center">
                   <svg
                     width="18"
@@ -922,8 +908,6 @@ export default function ThinkSection() {
                     <path d="M15 5l7 7-7 7" />
                   </svg>
                 </div>
-
-                {/* Drawing ring */}
                 <svg
                   className="absolute inset-0 w-full h-full pointer-events-none"
                   viewBox="0 0 56 56"
@@ -949,18 +933,17 @@ export default function ThinkSection() {
           </div>
         </div>
 
-        {/* ── FOOTER SECTION ── */}
+        {/* ── FOOTER ── */}
         <div
           style={{
             position: "relative",
             width: "100%",
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            backgroundColor: "rgba(0,0,0,0.5)",
             color: "white",
             overflow: "hidden",
             flexShrink: 0,
           }}
         >
-          {/* Local noise grain overlay for the footer */}
           <div
             style={{
               position: "absolute",
@@ -973,7 +956,6 @@ export default function ThinkSection() {
               zIndex: 0,
             }}
           />
-
           <div
             style={{
               position: "relative",
@@ -983,7 +965,6 @@ export default function ThinkSection() {
               margin: "0 auto",
             }}
           >
-            {/* Top Row: Let's build... and Work together */}
             <div
               style={{
                 display: "flex",
@@ -999,7 +980,6 @@ export default function ThinkSection() {
                   fontWeight: 400,
                   lineHeight: 1.1,
                   margin: 0,
-                  textTransform: "none",
                 }}
               >
                 Let&apos;s
@@ -1010,7 +990,6 @@ export default function ThinkSection() {
                 <br />
                 great...
               </h2>
-
               <button
                 className="group flex items-center bg-transparent border-none cursor-pointer"
                 style={{ paddingBottom: "20px" }}
@@ -1023,7 +1002,7 @@ export default function ThinkSection() {
                     marginRight: "24px",
                   }}
                 >
-                  Work togheter
+                  Work together
                 </span>
                 <div
                   className="flex items-center justify-center rounded-full border border-white/40 group-hover:border-white transition-colors"
@@ -1046,7 +1025,6 @@ export default function ThinkSection() {
               </button>
             </div>
 
-            {/* Links Grid */}
             <div
               style={{
                 display: "grid",
@@ -1055,7 +1033,6 @@ export default function ThinkSection() {
                 borderBottom: "1px solid rgba(255,255,255,0.15)",
               }}
             >
-              {/* Column 1: SOCIAL */}
               <div
                 style={{
                   padding: "40px 40px 40px 0",
@@ -1083,24 +1060,18 @@ export default function ThinkSection() {
                     fontWeight: 500,
                   }}
                 >
-                  <a
-                    href="#"
-                    className="hover:opacity-70 transition-opacity"
-                    style={{ color: "white", textDecoration: "none" }}
-                  >
-                    Linkedin
-                  </a>
-                  <a
-                    href="#"
-                    className="hover:opacity-70 transition-opacity"
-                    style={{ color: "white", textDecoration: "none" }}
-                  >
-                    Instagram
-                  </a>
+                  {["Linkedin", "Instagram"].map((s) => (
+                    <a
+                      key={s}
+                      href="#"
+                      className="hover:opacity-70 transition-opacity"
+                      style={{ color: "white", textDecoration: "none" }}
+                    >
+                      {s}
+                    </a>
+                  ))}
                 </div>
               </div>
-
-              {/* Column 2: LOUD */}
               <div
                 style={{
                   padding: "40px",
@@ -1117,7 +1088,7 @@ export default function ThinkSection() {
                     margin: "0 0 24px 0",
                   }}
                 >
-                  Innosphere
+                  IMPPECCABLES
                 </h4>
                 <div
                   style={{
@@ -1141,8 +1112,6 @@ export default function ThinkSection() {
                   ))}
                 </div>
               </div>
-
-              {/* Column 3: CONTACT */}
               <div style={{ padding: "40px 0 40px 40px" }}>
                 <h4
                   style={{
@@ -1156,36 +1125,24 @@ export default function ThinkSection() {
                 >
                   Contact
                 </h4>
-                <div
+                <a
+                  href="#"
+                  className="hover:opacity-70 transition-opacity"
                   style={{
-                    display: "flex",
-                    gap: "32px",
-                    flexWrap: "wrap",
+                    color: "white",
+                    textDecoration: "none",
                     fontFamily: "var(--font-sans, system-ui, sans-serif)",
                     fontSize: "13px",
                     fontWeight: 500,
                   }}
                 >
-                  {["Contact Us"].map((item) => (
-                    <a
-                      key={item}
-                      href="#"
-                      className="hover:opacity-70 transition-opacity"
-                      style={{ color: "white", textDecoration: "none" }}
-                    >
-                      {item}
-                    </a>
-                  ))}
-                </div>
+                  Contact Us
+                </a>
               </div>
             </div>
 
-            {/* Bottom Row */}
             <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1.5fr 1fr",
-              }}
+              style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr 1fr" }}
             >
               <div
                 style={{
@@ -1205,7 +1162,7 @@ export default function ThinkSection() {
                   color: "rgba(255,255,255,0.6)",
                 }}
               >
-                Innosphere digital - a company which turns complexity into
+                IMPPECCABLES digital - a company which turns complexity into
                 elegance.
               </div>
               <div
